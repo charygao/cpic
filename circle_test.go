@@ -7,5 +7,5 @@ import (
 
 func TestDrawCircle(t *testing.T) {
 	c := &Circle{}
-	println(strings.Join(c.Content("hello word"), "\n"))
+	strings.Join(c.Content("hello word"), "\n")
 }
