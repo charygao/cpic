@@ -26,9 +26,6 @@ func TestMain(t *testing.T) {
 	r.add(node6, LEFT)
 	r.add(node7, RIGHT)
 	root.ele = int(1)
+	//fmt.Println(root.height())
 	//root.walk(walkFunc)
-	/*
-		r.rm()
-		root.walk(walkFunc)
-	*/
 }

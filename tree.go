@@ -1,6 +1,7 @@
 package cpic
 
 import (
+	"container/list"
 	"fmt"
 )
 
@@ -22,11 +23,27 @@ type tree struct {
 	root *node
 }
 
+//dfs
 func (n *node) walk(f func(n *node)) {
 	if n != nil {
 		f(n)
 		for l := n.leftChild; l != nil; l = l.nextSibling {
 			l.walk(f)
+		}
+	}
+}
+
+//bfs
+func (n *node) bfs(f func(n *node)) {
+	var queue = list.New()
+	queue.PushBack(n)
+	for queue.Len() != 0 {
+		frt := queue.Front()
+		n := frt.Value.(*node)
+		queue.Remove(frt)
+		f(n)
+		for l := n.leftChild; l != nil; l = l.nextSibling {
+			queue.PushBack(l)
 		}
 	}
 }
@@ -43,6 +60,38 @@ type node struct {
 
 func (n *node) String() string {
 	return fmt.Sprintf("%.10s", n.ele)
+}
+
+//bfs get longest width
+func (n *node) width() int {
+	var width = 0
+	var queue = list.New()
+	queue.PushBack(n)
+	for queue.Len() != 0 {
+		frt := queue.Front()
+		n := frt.Value.(*node)
+		queue.Remove(frt)
+		count := 0
+		for l := n.leftChild; l != nil; l = l.nextSibling {
+			count++
+			queue.PushBack(l)
+		}
+		if count > width {
+			width = count
+		}
+	}
+	return width
+}
+
+//dfs get highest highet
+func (n *node) height() int {
+	var height = 0
+	n.walk(func(n *node) {
+		if n.depth > height {
+			height = n.depth
+		}
+	})
+	return height
 }
 func (n *node) rm() {
 	//it's not root
