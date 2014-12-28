@@ -1,5 +1,6 @@
 package cpic
 
+/*
 import (
 	"log"
 	"testing"
@@ -11,7 +12,10 @@ func TestParse(t *testing.T) {
 		-> red
 		-> red`)
 	n := p.Parse()
-	n.walk(func(n *node) {
-		log.Println(n.ele.(Token), "depth", n.depth)
+	n.walk(func(nd *node) {
+		if nd.ele != nil {
+			log.Println(nd.ele.(Token), "depth", nd.depth)
+		}
 	})
 }
+*/
