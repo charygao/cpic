@@ -127,7 +127,7 @@ func (p *Parser) Tree(n *node) *node {
 
 	var tree func(root *node)
 	tree = func(root *node) {
-		//log.Println("depth", depth)
+		log.Println("depth", root.depth)
 		//希望看到长度为depth的[TAG]token
 		var tags []int
 		for i := 0; i < root.depth+1; i++ {
@@ -136,30 +136,34 @@ func (p *Parser) Tree(n *node) *node {
 
 		//每次看到长度为depth的[TAG]token解析一个结点
 		for p.run(tags) {
-			//log.Println("run tags ", depth)
-			newNode := new(node)
+			log.Println("run tags ", root.depth)
 			//解析一个结点
+			newNode := new(node)
 			ok := parse(
 				[]pair{
 					{RIGHT_ARROW, nil},
 					{IDENT, func(ts ...Token) {
 						newNode.ele = ts[0]
 						root.add(newNode, LEFT)
-						log.Println("add node", newNode.depth)
+
+						log.Println("add node", newNode.depth, ts[0])
+						if root.ele != nil {
+							log.Println("parent node", root.ele.(Token))
+						}
 					}},
 				})
 			if ok {
 				//log.Println("parse node ok")
 				//如果下一层的tags数比本层多一个,就解析子树
 				if p.foresee(append(tags, TAG)) {
-					//log.Println("parse children")
+					log.Println("parse children")
 					tree(newNode)
 				} else {
-					//log.Println("parse siblings")
+					log.Println("parse siblings")
 				}
 				//条件不成立的话解析掉的tokens都会重新退回到缓存里面
 			} else {
-				//log.Println("parse node not ok")
+				log.Println("parse node not ok")
 			}
 		}
 	}
