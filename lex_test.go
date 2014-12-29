@@ -66,3 +66,21 @@ func TestLex(test *testing.T) {
 		}
 	}
 }
+
+type posTestSuit struct {
+	input     string
+	positions []position
+}
+
+var posTestSuits = []posTestSuit{
+	{`tree:
+	->black
+		->->red
+		->red
+`,
+		[]position{{0, 1}, {0, 5}, {1, 1}, {1, 2}, {1, 4}}},
+}
+
+func TestPos(t *testing.T) {
+
+}

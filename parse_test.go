@@ -7,18 +7,14 @@ import (
 	"testing"
 )
 
-type parserTestPair struct {
+type parserTestSuit struct {
 	name   string //for debug
 	errs   []string
 	input  string
 	output string
 }
 
-func display(v ...interface{}) {
-	fmt.Println(v...)
-}
-
-var parserTestPairs = []parserTestPair{
+var parserTestSuits = []parserTestSuit{
 	{"Normal Test",
 		[]string{},
 		`tree:
@@ -39,19 +35,36 @@ var parserTestPairs = []parserTestPair{
 **red
 `}, {
 		"Exception Test 1",
-		[]string{},
+		[]string{"want 2 indents for child node but get 3 at line 3"},
 		`tree:
 	->black
 			->red`,
 		`TREE
 *black
-***red`,
+`,
+	},
+	{"Exception Test 2",
+		[]string{"want a [IDENT], but only get '->' at line 3 column 5"},
+		`tree:
+	->black
+		->->red
+		->red
+`,
+		`TREE
+*black
+`,
 	},
 }
 
 func TestParse(t *testing.T) {
-	for _, testPair := range parserTestPairs {
-		p := newParser(testPair.input)
+	defer func() {
+		display = func(v ...interface{}) {}
+	}()
+	display = func(v ...interface{}) {
+		//fmt.Println(v...)
+	}
+	for _, testSuit := range parserTestSuits {
+		p := newParser(testSuit.input)
 		n := p.parse()
 		var out string
 		n.walk(func(n *node) {
@@ -61,8 +74,13 @@ func TestParse(t *testing.T) {
 				out += fmt.Sprintln("TREE")
 			}
 		})
-		if testPair.output != out {
-			log.Fatalf("\n%s(wanted output) not equal\n%s", testPair.output, out)
+		if testSuit.output != out {
+			log.Fatalf("\n%s(wanted output) not equal\n%s", testSuit.output, out)
+		}
+		for i := 0; i < len(testSuit.errs); i++ {
+			if testSuit.errs[i] != p.errors[i] {
+				log.Fatalf("\n%s(wanted error) not equal\n%s", testSuit.errs[i], p.errors[i])
+			}
 		}
 	}
 }
