@@ -3,69 +3,75 @@ package cpic
 import (
 	"container/list"
 	"fmt"
-	"log"
+	//"log"
 )
 
-type Parser struct {
-	lexer  *Lexer
+//parser is the the syntax parser
+type parser struct {
+	lexer  *lexer
 	buf    *list.List
 	errors []string
 }
 
-func NewParser(src string) *Parser {
-	return &Parser{
-		lexer: NewLexer(src),
+//Newparser initiates parser to parse src.
+func newParser(src string) *parser {
+	return &parser{
+		lexer: newLexer(src),
 		buf:   list.New(),
 	}
 }
 
 //place holder function
 func __placeholder() {
-	log.Println("log")
+	//log.Println("log")
 }
 
-func (p *Parser) Err(e string) {
+//Err appends error to error stack.
+func (p *parser) err(e string) {
 	p.errors = append(p.errors, e)
 }
-func (p *Parser) Parse() *node {
+
+//parse is the main parsing entry.
+func (p *parser) parse() *node {
 	n := &node{}
 	token := p.token()
-	if token.typ == TREE {
+	if token.typ == kTREE {
 		//parse a tree
 		p.Tree(n)
 	}
 	return n
 }
 
-func (p *Parser) token() Token {
-	var tk Token
+//token gets token from buf,if not,waits for the chanell to recevie new one.
+func (p *parser) token() token {
+	var tk token
 	if p.buf.Front() == nil {
-		tk = p.lexer.Token()
+		tk = p.lexer.token()
 	} else {
 		frt := p.buf.Front()
-		tk = frt.Value.(Token)
+		tk = frt.Value.(token)
 		p.buf.Remove(frt)
 	}
 	return tk
 }
 
-func (p *Parser) backup(t Token) {
+func (p *parser) backup(t token) {
 	p.buf.PushFront(t)
 }
 
 //side effect:error handling
-func (p *Parser) expect(typ int) bool {
+func (p *parser) expect(typ int) bool {
 	t := p.token()
 	if t.typ != typ {
-		p.Err(fmt.Sprintf("line %d,column %d,expect \\t,found %s", t.pos.line+1, t.pos.col+1, t.lit))
+		p.err(fmt.Sprintf("line %d,column %d,expect \\t,found %s", t.pos.line+1, t.pos.col+1, t.lit))
 		return false
 	}
 	return true
 }
 
 //parse a run of tokens,if not backup all the parsed the tokens in this routine
-func (p *Parser) run(typs []int) bool {
-	var tkbuf []Token
+func (p *parser) run(typs []int) bool {
+	var tkbuf []token
 	for _, typ := range typs {
 		t := p.token()
 		tkbuf = append(tkbuf, t)
@@ -80,9 +86,9 @@ func (p *Parser) run(typs []int) bool {
 }
 
 //foresee run of tokens
-func (p *Parser) foresee(typs []int) bool {
+func (p *parser) foresee(typs []int) bool {
 	var ok = true
-	var tkbuf []Token
+	var tkbuf []token
 	for _, typ := range typs {
 		t := p.token()
 		tkbuf = append(tkbuf, t)
@@ -97,13 +103,14 @@ func (p *Parser) foresee(typs []int) bool {
 	return ok
 }
 
-func (p *Parser) Tree(n *node) *node {
+//parse tree.
+func (p *parser) Tree(n *node) *node {
 	//keyword tree has been parsed
 
 	//token action pair
 	type pair struct {
 		typ int
-		f   func(token ...Token)
+		f   func(token ...token)
 	}
 
 	//if parsing unwanted token,break the parsing and return false
@@ -121,49 +128,52 @@ func (p *Parser) Tree(n *node) *node {
 	}
 
 	//want COLON after keyword tree
-	if !p.expect(COLON) {
+	if !p.expect(tCOLON) {
 		return n
 	}
 
 	var tree func(root *node)
 	tree = func(root *node) {
-		log.Println("depth", root.depth)
+		//log.Println("depth", root.depth)
 		//希望看到长度为depth的[TAG]token
 		var tags []int
 		for i := 0; i < root.depth+1; i++ {
-			tags = append(tags, TAG)
+			tags = append(tags, tTAG)
 		}
 
 		//每次看到长度为depth的[TAG]token解析一个结点
+		//want "depth" tags
 		for p.run(tags) {
-			log.Println("run tags ", root.depth)
+			//log.Println("run tags ", root.depth)
 			//解析一个结点
+			//parse a new node
 			newNode := new(node)
 			ok := parse(
 				[]pair{
-					{RIGHT_ARROW, nil},
-					{IDENT, func(ts ...Token) {
+					{tRIGHT_ARROW, nil},
+					{tIDENT, func(ts ...token) {
 						newNode.ele = ts[0]
-						root.add(newNode, LEFT)
+						root.add(newNode, rRIGHT)
 
-						log.Println("add node", newNode.depth, ts[0])
+						//log.Println("add node", newNode.depth, ts[0])
 						if root.ele != nil {
-							log.Println("parent node", root.ele.(Token))
+							//log.Println("parent node", root.ele.(token))
 						}
 					}},
 				})
 			if ok {
-				//log.Println("parse node ok")
+				////log.Println("parse node ok")
 				//如果下一层的tags数比本层多一个,就解析子树
-				if p.foresee(append(tags, TAG)) {
-					log.Println("parse children")
+				//if next tags - current tags = 1,parse child tree
+				if p.foresee(append(tags, tTAG)) {
+					//log.Println("parse children")
 					tree(newNode)
 				} else {
-					log.Println("parse siblings")
+					//log.Println("parse siblings")
 				}
 				//条件不成立的话解析掉的tokens都会重新退回到缓存里面
 			} else {
-				log.Println("parse node not ok")
+				//log.Println("parse node not ok")
 			}
 		}
 	}

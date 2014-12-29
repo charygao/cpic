@@ -11,12 +11,13 @@ tree
 
 type relation int
 
+//position to add to a node.
 const (
-	LEFT relation = iota
-	RIGHT
-	PREV
-	NEXT
-	PAREN
+	rLEFT relation = iota
+	rRIGHT
+	rPREV
+	rNEXT
+	rPAREN
 )
 
 type tree struct {
@@ -62,7 +63,7 @@ func (n *node) String() string {
 	return fmt.Sprintf("%.10s", n.ele)
 }
 
-//bfs get longest width
+//bfs get widest width
 func (n *node) width() int {
 	var width = 0
 	var queue = list.New()
@@ -124,7 +125,7 @@ func (n *node) rm() {
 //can not add parent
 func (n *node) add(newNode *node, typ relation) *node {
 	switch typ {
-	case LEFT:
+	case rLEFT:
 		newNode.parent = n
 		if n.leftChild == nil {
 			n.leftChild = newNode
@@ -136,7 +137,7 @@ func (n *node) add(newNode *node, typ relation) *node {
 		}
 		newNode.depth = n.depth + 1
 		return newNode
-	case RIGHT:
+	case rRIGHT:
 		newNode.parent = n
 		if n.rightChild == nil {
 			n.leftChild = newNode
@@ -148,7 +149,7 @@ func (n *node) add(newNode *node, typ relation) *node {
 		}
 		newNode.depth = n.depth + 1
 		return newNode
-	case PREV:
+	case rPREV:
 		//if it's lefChild
 		if n.prevSibling == nil {
 			n.parent.leftChild = newNode
@@ -164,7 +165,7 @@ func (n *node) add(newNode *node, typ relation) *node {
 		}
 		newNode.depth = n.depth
 		return newNode
-	case NEXT:
+	case rNEXT:
 		//if it's right child
 		if n.nextSibling == nil {
 			n.parent.rightChild = newNode
