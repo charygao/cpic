@@ -68,19 +68,36 @@ func TestLex(test *testing.T) {
 }
 
 type posTestSuit struct {
+	name      string
 	input     string
 	positions []position
 }
 
 var posTestSuits = []posTestSuit{
-	{`tree:
+	{
+		`Normal Test`,
+		`tree:
 	->black
 		->->red
 		->red
 `,
-		[]position{{0, 1}, {0, 5}, {1, 1}, {1, 2}, {1, 4}}},
+		[]position{{0, 0}, {0, 4},
+			{1, 0}, {1, 1}, {1, 3},
+			{2, 0}, {2, 1}, {2, 2}, {2, 4}, {2, 6},
+			{3, 0}, {3, 1}, {3, 2}, {3, 4},
+		}},
 }
 
-func TestPos(t *testing.T) {
+func TestPos(test *testing.T) {
+	for _, suit := range posTestSuits {
+		l := newLexer(suit.input)
+		i := 0
+		for t := l.token(); t.typ != tEOF; t = l.token() {
+			if t.pos != suit.positions[i] {
+				test.Fatalf("want pos [%d] line %d,col %d,but get line %d,col %d(token is %v )", i, suit.positions[i].line, suit.positions[i].col, t.pos.line, t.pos.col, t)
+			}
+			i++
+		}
+	}
 
 }

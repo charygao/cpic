@@ -44,7 +44,7 @@ var parserTestSuits = []parserTestSuit{
 `,
 	},
 	{"Exception Test 2",
-		[]string{"want a [IDENT], but only get '->' at line 3 column 5"},
+		[]string{"want a [IDENT], but only get '->' at line 3,column 5"},
 		`tree:
 	->black
 		->->red

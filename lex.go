@@ -8,14 +8,14 @@ import (
 )
 
 //position is the token position in the source text,
-//used for error tracing.
+//used for error tracing,line and col counts from 0.
 type position struct {
 	line int //line number
 	col  int //colummn number
 }
 
 //position 表示的是在源文本中的位置,会把ignore掉的token的位置也考虑进去
-//方便错误显示
+//方便错误显示,line 和 col 都是从0开始计数的.
 
 //lexical token.
 type token struct {

@@ -55,6 +55,7 @@ func (p *parser) token() token {
 	if p.buf.Front() == nil {
 		if len(p.lexer.errors) > 0 {
 			//come across errors,stop parsing.
+			//TODO:remove panic to handle error,use nil token insead.
 			panic(strings.Join(p.lexer.errors, "\n"))
 		}
 		tk = p.lexer.token()
@@ -210,7 +211,7 @@ func (p *parser) Tree(n *node) *node {
 					return nil
 				} else {
 					//如果本身的结点解析不成功,报本身的错误.
-					p.errf("want a %s, but only get '%s' at line %d,column %d", tokens[typ], errToken.lit, errToken.pos.line+1, errToken.pos.col)
+					p.errf("want a %s, but only get '%s' at line %d,column %d", tokens[typ], errToken.lit, errToken.pos.line+1, errToken.pos.col+1)
 					return nil
 				}
 			}
