@@ -1,7 +1,7 @@
 package cpic
 
 import (
-	"log"
+	//"log"
 	"testing"
 )
 
@@ -25,33 +25,35 @@ func TestDraw(t *testing.T) {
 		m.draw()
 		log.Println(m.output())
 	*/
-	p := newParser(`tree:
-		-> black
-			->red
+	/*
+		p := newParser(`tree:
+			-> black
 				->red
-					->red
 					->red
 						->red
 						->red
+							->red
+							->red
+				->red
+					->red
+						->red
+				->red
+					->red`)
+		n := p.parse()
+		//TREE
+		//black
+		//|  \   \
+		//red red red
+		//|
+		//red    width=11,height=6
+		m := newMatrix(n)
+		m.draw()
+		o := Gen(`tree:
 			->red
 				->red
 					->red
-			->red
-				->red`)
-	n := p.parse()
-	//TREE
-	//black
-	//|  \   \
-	//red red red
-	//|
-	//red    width=11,height=6
-	m := newMatrix(n)
-	m.draw()
-	o := Gen(`tree:
-		->red
-			->red
-				->red
-				->black
-					->black`)
-	log.Println(o)
+					->black
+						->black`)
+		log.Println(o)
+	*/
 }

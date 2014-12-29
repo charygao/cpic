@@ -1,8 +1,10 @@
+//TODO:add more test cases.
 package cpic
 
 import (
 	"container/list"
 	"fmt"
+	"strings"
 	//"log"
 )
 
@@ -31,13 +33,18 @@ func (p *parser) err(e string) {
 	p.errors = append(p.errors, e)
 }
 
+//format error
+func (p *parser) errf(f string, v ...interface{}) {
+	p.errors = append(p.errors, fmt.Sprintf(f, v...))
+}
+
 //parse is the main parsing entry.
 func (p *parser) parse() *node {
 	n := &node{}
 	token := p.token()
 	if token.typ == kTREE {
 		//parse a tree
-		p.Tree(n)
+		n = p.Tree(n)
 	}
 	return n
 }
@@ -46,6 +53,10 @@ func (p *parser) parse() *node {
 func (p *parser) token() token {
 	var tk token
 	if p.buf.Front() == nil {
+		if len(p.lexer.errors) > 0 {
+			//come across errors,stop parsing.
+			panic(strings.Join(p.lexer.errors, "\n"))
+		}
 		tk = p.lexer.token()
 	} else {
 		frt := p.buf.Front()
@@ -53,6 +64,13 @@ func (p *parser) token() token {
 		p.buf.Remove(frt)
 	}
 	return tk
+}
+
+//peek a token
+func (p *parser) peek() token {
+	var t = p.token()
+	p.backup(t)
+	return t
 }
 
 func (p *parser) backup(t token) {
@@ -132,8 +150,8 @@ func (p *parser) Tree(n *node) *node {
 		return n
 	}
 
-	var tree func(root *node)
-	tree = func(root *node) {
+	var tree func(root *node) *node
+	tree = func(root *node) *node {
 		//log.Println("depth", root.depth)
 		//希望看到长度为depth的[TAG]token
 		var tags []int
@@ -168,15 +186,20 @@ func (p *parser) Tree(n *node) *node {
 				if p.foresee(append(tags, tTAG)) {
 					//log.Println("parse children")
 					tree(newNode)
-				} else {
-					//log.Println("parse siblings")
 				}
+				//parse siblings
+				if p.foresee(tags) {
+					continue
+				}
+				//log.Println("parse siblings")
 				//条件不成立的话解析掉的tokens都会重新退回到缓存里面
 			} else {
+				p.errf("want -> identifer,but get %s at line %d,column %d", p.peek().lit, p.peek().pos.line, p.peek().pos.col)
+				return nil
 				//log.Println("parse node not ok")
 			}
 		}
+		return n
 	}
-	tree(n)
-	return n
+	return tree(n)
 }

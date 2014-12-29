@@ -33,7 +33,9 @@ type stateFn func(l *lexer) stateFn
 
 //lexical parser.
 type lexer struct {
-	cur token
+	name string //for debug
+
+	cur token //current scanned token
 
 	src string //source
 
@@ -61,6 +63,7 @@ const (
 	tRIGHT_ARROW
 	tTAG
 	tCOLON
+	tERR
 	tEOF
 	token_end
 )
@@ -107,7 +110,14 @@ func (l *lexer) next() rune {
 	return r
 }
 
-func (l *lexer) consume() {
+//push error message into tracing stack
+func (l *lexer) err(e string) {
+	l.errors = append(l.errors, e)
+}
+
+//format error
+func (l *lexer) errf(f string, v ...interface{}) {
+	l.errors = append(l.errors, fmt.Sprintf(f, v...))
 }
 
 //backup a token
@@ -125,11 +135,14 @@ func (l *lexer) ignore() {
 
 //emit token
 func (l *lexer) emit(typ int) {
-	l.tokenChan <- token{
+	var t = token{
 		lit: l.src[l.start:l.pos],
 		typ: typ,
 		pos: position{l.lineNum, l.colNum - (l.pos - l.start)},
 	}
+	//fmt.Println("token", t)
+	l.tokenChan <- t
+
 	l.start = l.pos
 
 }
@@ -152,7 +165,16 @@ func (l *lexer) run() {
 //error handling
 //TODO:sync errors.
 func lexError(l *lexer) stateFn {
-	return lexBegin
+	//premature lexical scanning
+	//不emit接收方就一直在等待
+	l.emit(tEOF)
+	return nil
+}
+
+func lexUnkown(l *lexer) stateFn {
+	//premature lexical scanning
+	l.emit(tEOF)
+	return nil
 }
 
 //end of scanning
@@ -187,7 +209,7 @@ func lexBegin(l *lexer) stateFn {
 			l.emit(tRIGHT_ARROW)
 		} else {
 			l.backup()
-			l.errors = append(l.errors, "expect '>' after '-'")
+			l.err("expect '>' after '-'")
 			return lexError
 		}
 	case r == ' ':
@@ -202,6 +224,9 @@ func lexBegin(l *lexer) stateFn {
 		l.emit(tTAG)
 	case r == eof:
 		return lexEOF
+	default:
+		l.errf("unkown char '%c' at line %d,column %d", r, l.lineNum+1, l.colNum)
+		return lexUnkown
 	}
 	return lexBegin
 }
