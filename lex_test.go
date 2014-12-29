@@ -24,7 +24,7 @@ var lexTestPairs = []lexTestPair{
 			tTAG, tTAG, tRIGHT_ARROW, tIDENT}},
 	{
 		"Exception Test 1",
-		[]string{"expect '>' after '-'"},
+		[]string{"expect '>' after '-' at line 2,column 3"},
 		`tree:
 a-<`,
 		[]int{kTREE, tCOLON, tIDENT},
@@ -50,17 +50,16 @@ a-<`,
 func TestLex(test *testing.T) {
 	for _, ltp := range lexTestPairs {
 		lex := newLexer(ltp.input)
-		lex.name = ltp.name
 		i := 0
 		for t := lex.token(); t.typ != tEOF; t = lex.token() {
 			if ltp.output[i] != t.typ {
-				test.Fatalf("%s(wanted) not equal %s in %s\n", tokens[ltp.output[i]], tokens[t.typ], lex.name)
+				test.Fatalf("%s(wanted) not equal %s in %s\n", tokens[ltp.output[i]], tokens[t.typ], ltp.name)
 			}
 			i++
 		}
 		for i := 0; i < len(ltp.errs); i++ {
 			if ltp.errs[i] != lex.errors[i] {
-				test.Fatalf("%s(wanted error) not equal %s in %s\n", ltp.errs[i], lex.errors[i], lex.name)
+				test.Fatalf("%s(wanted error) not equal %s in %s\n", ltp.errs[i], lex.errors[i], ltp.name)
 			}
 
 		}

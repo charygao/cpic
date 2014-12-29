@@ -2,58 +2,87 @@ package cpic
 
 import (
 	//"log"
+	"strings"
 	"testing"
 )
 
-func TestDraw(t *testing.T) {
-	/*
-		p := NewParser(`tree:
-		-> black
-			-> red
-			-> red`)
-		n := p.Parse()
-	*/
-	//m := NewMatrix(n)
-	//TREE
-	//black
-	//|  \
-	//red red   width=7,height=3
-	/*
-		if m.width != 7 || m.height != 4 {
-			log.Fatal(m.width, m.height)
-		}
-		m.draw()
-		log.Println(m.output())
-	*/
-	/*
-		p := newParser(`tree:
-			-> black
-				->red
-					->red
-						->red
-						->red
-							->red
-							->red
-				->red
-					->red
-						->red
-				->red
-					->red`)
-		n := p.parse()
-		//TREE
-		//black
-		//|  \   \
-		//red red red
-		//|
-		//red    width=11,height=6
-		m := newMatrix(n)
-		m.draw()
-		o := Gen(`tree:
+type treeTestSuit struct {
+	name   string
+	input  string
+	output string
+	err    string
+}
+
+var treeTestSuits = []treeTestSuit{
+	{
+		"Normal Test 1",
+		`tree:
+	->black
+		->red
+		->red`,
+		`TREE***
+black**
+|**\***
+red*red
+`, ``}, {
+		"Normal Test 2",
+		`tree:
+	-> black
+		->red
 			->red
 				->red
+				->red
 					->red
-					->black
-						->black`)
-		log.Println(o)
-	*/
+					->red
+		->red
+			->red
+				->red
+		->red
+			->red`, `TREE***************
+black**************
+|**********\***\***
+red*********red*red
+|***********|***|**
+red*********red*red
+|**\********|******
+red*red*****red****
+****|**\***********
+****red*red********
+`, ``},
+	{"Exception Test 3",
+		`tree:
+	->red
+		->red
+			->red
+	->black`, ``,
+		`unexpected '	' after tree parsed at line 5,column 1`, //do not care output
+	},
+}
+
+func TestDraw(t *testing.T) {
+	defer func() {
+		placeHolder = ' '
+	}()
+	placeHolder = '*'
+	for _, suit := range treeTestSuits {
+		p := newParser(suit.input)
+		n := p.parse()
+		if n == nil {
+			if suit.err != strings.Join(p.errors, "\n") {
+				t.Fatalf("\n%s(wanted error) not equal\n%s", suit.err, strings.Join(p.errors, "\n"))
+			}
+		} else {
+			m := newMatrix(n)
+			m.draw()
+			if suit.output != m.output() && len(suit.output) > 0 {
+				for i := 0; i < len(suit.output); i++ {
+					if suit.output[i] != m.output()[i] {
+						t.Logf("diff index [%d]: %c %c", i, suit.output[i], m.output()[i])
+						break
+					}
+				}
+				t.Fatalf("\n%s(wanted output) not equal\n%s", suit.output, m.output())
+			}
+		}
+	}
 }

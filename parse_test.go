@@ -2,7 +2,6 @@ package cpic
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"testing"
 )
@@ -15,7 +14,7 @@ type parserTestSuit struct {
 }
 
 var parserTestSuits = []parserTestSuit{
-	{"Normal Test",
+	{"Normal Test 1",
 		[]string{},
 		`tree:
 	->black
@@ -33,15 +32,14 @@ var parserTestSuits = []parserTestSuit{
 ***red
 **red
 **red
-`}, {
+`},
+	{
 		"Exception Test 1",
 		[]string{"want 2 indents for child node but get 3 at line 3"},
 		`tree:
 	->black
 			->red`,
-		`TREE
-*black
-`,
+		``, //do not care output
 	},
 	{"Exception Test 2",
 		[]string{"want a [IDENT], but only get '->' at line 3,column 5"},
@@ -50,9 +48,16 @@ var parserTestSuits = []parserTestSuit{
 		->->red
 		->red
 `,
-		`TREE
-*black
-`,
+		``, //do not care output
+	},
+	{"Exception Test 3",
+		[]string{"unexpected '	' after tree parsed at line 5,column 1"},
+		`tree:
+	->red
+		->red
+			->red
+	->black
+`, ``, //do not care output
 	},
 }
 
@@ -74,12 +79,14 @@ func TestParse(t *testing.T) {
 				out += fmt.Sprintln("TREE")
 			}
 		})
-		if testSuit.output != out {
-			log.Fatalf("\n%s(wanted output) not equal\n%s", testSuit.output, out)
+		if testSuit.output != out && len(testSuit.output) > 0 {
+			t.Fatalf("\n%s(wanted output) not equal\n%s in %s", testSuit.output, out, testSuit.name)
 		}
-		for i := 0; i < len(testSuit.errs); i++ {
-			if testSuit.errs[i] != p.errors[i] {
-				log.Fatalf("\n%s(wanted error) not equal\n%s", testSuit.errs[i], p.errors[i])
+		if n == nil {
+			for i := 0; i < len(testSuit.errs); i++ {
+				if testSuit.errs[i] != p.errors[i] {
+					t.Fatalf("\n%s(wanted error) not equal\n%s in %s", testSuit.errs[i], p.errors[i], testSuit.name)
+				}
 			}
 		}
 	}

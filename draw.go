@@ -6,7 +6,8 @@ package cpic
 //绘制一个结点时如果有子结点的时候,第一个子节点添加一条辅助线('|'),然后空出该子树宽度的空格,
 //当有第二个或者更多子树的时候,之间要用空格隔开一个,对应的位置作辅助线('\'),之后一个位置开始绘制子树,
 //然后递归绘制.
-//结构类似
+//结构类似类似于下面这张结构图
+//
 //TREE
 //┌──┐
 //└──┘
@@ -17,12 +18,15 @@ package cpic
 //│  │ └────┘ └────────────┘
 //└──┘
 //
+//
 import (
+	"errors"
 	"fmt"
+	"strings"
 )
 
-const (
-	placeHolder = ' '
+var (
+	placeHolder byte = ' ' //for debug
 )
 
 func _placeholder() {
@@ -88,7 +92,6 @@ func newMatrix(n *node) *matrix {
 	m.width = 0
 
 	m.width, m.height = getscale(n)
-	fmt.Println("init height width ", m.height, m.width)
 	//init m.py
 
 	m.py = make([][]byte, m.height)
@@ -123,7 +126,6 @@ func (m *matrix) paintA(content [][]byte, px, py int) {
 func (m *matrix) draw() {
 	var _draw func(n *node, offsetX, offsetY int)
 	_draw = func(n *node, offsetX, offsetY int) {
-		fmt.Println(m.output())
 		//fmt.Println("draw x,y", offsetX, offsetY)
 		//根节点打印TREE
 		//print "TREE" for root nil node.
@@ -177,10 +179,13 @@ func (m *matrix) output() string {
 }
 
 //Gen inputs source text and output data structure char picture.
-func Gen(src string) string {
+func Gen(src string) (string, error) {
 	p := newParser(src)
 	n := p.parse()
+	if n == nil {
+		return "", errors.New(strings.Join(p.errors, "\n"))
+	}
 	m := newMatrix(n)
 	m.draw()
-	return m.output()
+	return m.output(), nil
 }

@@ -17,6 +17,9 @@ func main() {
 		panic(e)
 	}
 	fmt.Printf("%s\n", bs)
-	out := cpic.Gen(string(bs))
+	out, err := cpic.Gen(string(bs))
+	if err != nil {
+		fmt.Print(err)
+	}
 	fmt.Println(out)
 }

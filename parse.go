@@ -45,11 +45,16 @@ func (p *parser) parse() *node {
 	if token.typ == kTREE {
 		//parse a tree
 		n = p.Tree(n)
+		token = p.token()
+		if token.typ != tEOF {
+			p.errf("unexpected '%s' after tree parsed at line %d,column %d", token.lit, token.pos.line+1, token.pos.col+1)
+			return nil
+		}
 	}
 	return n
 }
 
-//token gets token from buf,if not,waits for the chanell to recevie new one.
+//token gets token from buf,if not,waits for the chanel to recevie new one.
 func (p *parser) token() token {
 	var tk token
 	if p.buf.Front() == nil {
@@ -197,10 +202,17 @@ func (p *parser) Tree(n *node) *node {
 					//log.Println("parse children")
 					tree(newNode)
 				}
-				//parse siblings
-				//如果不能解析下一次的兄弟结点
-				if !p.foresee(tags) {
-					p.errf("parse tree error,please check wether indent number match or there are any other characters  at line %d", p.peek().lit, p.peek().pos.line+1)
+				//can parse siblings ?
+				if p.foresee(tags) {
+					//第一层的结点唯一
+					//first level node only allows one.
+					if newNode.depth == 1 {
+						break
+					}
+				} else {
+					//如果不能解析下一次兄弟结点这层的解析结束,不作错误处理,
+					//在树外继续解析.
+					break
 				}
 				//log.Println("parse siblings")
 				//条件不成立的话解析掉的tokens都会重新退回到缓存里面

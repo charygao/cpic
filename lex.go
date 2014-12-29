@@ -33,8 +33,6 @@ type stateFn func(l *lexer) stateFn
 
 //lexical parser.
 type lexer struct {
-	name string //for debug
-
 	cur token //current scanned token
 
 	src string //source
@@ -43,8 +41,8 @@ type lexer struct {
 	start int //起始的位置
 	width int //token的宽度
 
-	lineNum int //line counter
-	colNum  int //columnn counter
+	lineNum int //line counter,count from 0
+	colNum  int //columnn counter,count from 1
 
 	errors    []string   //errors stack
 	state     stateFn    //状态函数
@@ -142,6 +140,9 @@ func (l *lexer) emit(typ int) {
 	}
 	//fmt.Println("token", t)
 	l.tokenChan <- t
+	if t.typ == tEOF {
+		close(l.tokenChan)
+	}
 
 	l.start = l.pos
 
@@ -208,8 +209,7 @@ func lexBegin(l *lexer) stateFn {
 		if r == '>' {
 			l.emit(tRIGHT_ARROW)
 		} else {
-			l.backup()
-			l.err("expect '>' after '-'")
+			l.errf("expect '>' after '-' at line %d,column %d", l.lineNum+1, l.colNum)
 			return lexError
 		}
 	case r == ' ':
