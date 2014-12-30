@@ -16,7 +16,6 @@ func ExampleGen() {
 	if e != nil {
 		panic(e)
 	}
-	fmt.Printf("%s\n", bs)
 	out, err := Gen(string(bs))
 	if err != nil {
 		fmt.Print(err)

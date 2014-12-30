@@ -49,16 +49,18 @@ type matrix struct {
 //getscale gets width and hieght of a root node n on behalf of a tree.
 func getscale(n *node) (width int, height int) {
 	if n.ele == nil {
-		height = 0
+		height = 1
 		width = 4 // len("TREE")
 	} else {
 		height = 1
 		width = len(n.ele.(token).lit)
 	}
 	if n.leftChild != nil {
-		//该节点右子节点至少要画一个竖线,高度还要加1,NIL的根节点加一用来放一个tree标记
-		//one more line for auxiliary line( '\' | '|'),or nil root's 1 height for string "TREE"
-		height++
+		//该节点右子节点至少要画一个竖线,高度还要加1,root的NIL结点不加
+		//one more line for auxiliary line( '\' | '|'),root的NIL结点不加
+		if n.ele != nil {
+			height++
+		}
 		var htTmp, whTmp, withSpaceCount int
 
 		for l := n.leftChild; l != nil; l = l.nextSibling {
