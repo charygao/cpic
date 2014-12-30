@@ -21,4 +21,11 @@ func ExampleGen() {
 		fmt.Print(err)
 	}
 	fmt.Println(out)
+	//Output:
+	//TREE
+	//black
+	//|  \
+	//red red
+	//    |
+	//    black
 }

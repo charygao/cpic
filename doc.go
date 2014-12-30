@@ -1,33 +1,11 @@
-//cpic is a tool to draw data structure in ASCI character picture.
+//Cpic is a tool to draw data structure in ASCI character picture.
 //
-//Example:
+//Tree:
 //
-//tree is parsed with top to left,and indent denotes depth
+//  Tree is conveted from top to left,and indent denotes depth.
+//  Every tree needs to begin with `tree:` in order to direct tree parsing and
+//	one indent next line with a `->` followe by a identifier (begin with '_' or letters)
+//	to denote a node.
 //
-//	tree:
-//	    -> black
-//		    ->red
-//              ->red
-//	                ->red
-//	                ->red
-//	                    ->red
-//	                    ->red
-//              ->red
-//	                ->red
-//	                    ->red
-//              ->red
-//	                ->red
 //
-//	to
-//
-//	TREE
-//	black
-//	|          \   \
-//	red         red red
-//	|           |   |
-//	red         red red
-//	|  \        |
-//	red red  	red
-//	|  \
-//	red red
 package cpic

@@ -187,7 +187,7 @@ func lexEOF(l *lexer) stateFn {
 //parse id
 func lexId(l *lexer) stateFn {
 	r := l.next()
-	for ; unicode.IsLetter(r); r = l.next() {
+	for ; unicode.IsLetter(r) || unicode.IsDigit(r); r = l.next() {
 	}
 	l.backup()
 	v := l.src[l.start:l.pos]
@@ -202,7 +202,7 @@ func lexId(l *lexer) stateFn {
 //main parse entry
 func lexBegin(l *lexer) stateFn {
 	switch r := l.next(); {
-	case unicode.IsLetter(r):
+	case unicode.IsLetter(r) || r == '_':
 		return lexId
 	case r == '-':
 		r = l.next()
