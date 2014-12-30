@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	placeHolder byte = ' ' //for debug
+	placeHolder byte = '*' //for debug
 )
 
 func _placeholder() {
