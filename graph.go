@@ -31,7 +31,7 @@ func newGraph() *graph {
 
 //vertex is a vertex(node) in graph
 type vertex struct {
-	id  string
+	id  string //for debug
 	ele interface{}
 }
 

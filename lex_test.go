@@ -13,7 +13,7 @@ type lexTestPair struct {
 
 var lexTestPairs = []lexTestPair{
 	{
-		"Normal Test",
+		"Normal Test 1",
 		[]string{},
 		`tree:
 	-> black

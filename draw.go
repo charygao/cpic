@@ -19,6 +19,7 @@ package cpic
 //└──┘
 //
 //
+//图的绘制思路:
 import (
 	"errors"
 	"fmt"
@@ -26,7 +27,7 @@ import (
 )
 
 var (
-	placeHolder byte = '*' //for debug
+	placeHolder byte = ' ' //for debug
 )
 
 func _placeholder() {

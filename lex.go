@@ -52,17 +52,19 @@ type lexer struct {
 const (
 	key_words_begin = iota
 	//keyword
-	kTREE
+	kTREE //tree
 	key_words_end
 
 	token_begin
 	//token
-	tIDENT
-	tRIGHT_ARROW
-	tTAG
-	tCOLON
-	tERR
-	tEOF
+	tIDENT       //(_|letter)(_|letter|digit)*
+	tRIGHT_ARROW //->
+	tLEFT_ARROW  //<-
+	tTAG         //\t
+	tCOLON       //:
+	tOR          //|
+	tERR         //err
+	tEOF         //eof
 	token_end
 )
 
@@ -71,6 +73,7 @@ const eof = -1
 var tokens = map[int]string{
 	kTREE:        "tree",
 	tRIGHT_ARROW: "[->]",
+	tLEFT_ARROW:  "[<-]",
 	tTAG:         "[TAG]",
 	tIDENT:       "[IDENT]",
 	tCOLON:       "[COLON]",
@@ -187,7 +190,7 @@ func lexEOF(l *lexer) stateFn {
 //parse id
 func lexId(l *lexer) stateFn {
 	r := l.next()
-	for ; unicode.IsLetter(r) || unicode.IsDigit(r); r = l.next() {
+	for ; unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_'; r = l.next() {
 	}
 	l.backup()
 	v := l.src[l.start:l.pos]
@@ -212,6 +215,14 @@ func lexBegin(l *lexer) stateFn {
 			l.errf("expect '>' after '-' at line %d,column %d", l.lineNum+1, l.colNum)
 			return lexError
 		}
+	case r == '<':
+		r = l.next()
+		if r == '-' {
+			l.emit(tLEFT_ARROW)
+		} else {
+			l.errf("expect '-' after '<' at line %d,column %d", l.lineNum+1, l.colNum)
+			return lexError
+		}
 	case r == ' ':
 		l.ignore()
 	case r == '\n':
@@ -220,6 +231,8 @@ func lexBegin(l *lexer) stateFn {
 		l.colNum = 0
 	case r == ':':
 		l.emit(tCOLON)
+	case r == '|':
+		l.emit(tOR)
 	case r == '\t':
 		l.emit(tTAG)
 	case r == eof:
