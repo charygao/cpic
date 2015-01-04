@@ -131,7 +131,28 @@ func (p *parser) foresee(typs []int) bool {
 	return ok
 }
 
+//graph 的语法.
+//
+//图不可以赋值.
+//graph:
+//a->1 b,10 c,1 d,2 e,100 f//不可以重复,格式是权重加结点,中间空格.
+//b->f,c,e,f  //没有出现的,自动添加,没有默认是0,
+func (p *parser) Graph(n *graph) *graph {
+	p.token()
+	return nil
+}
+
 //parse tree.
+//tree 的解析可以更复杂一点比如 赋值
+//a := tree:
+//		->black
+//		->red
+//		->red
+//
+//b := tree:
+//		->black
+//			->a
+//
 func (p *parser) Tree(n *node) *node {
 	//keyword tree has been parsed
 
