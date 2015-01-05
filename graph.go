@@ -19,6 +19,28 @@ type graph struct {
 	vertexIDs map[string]bool     // prevent duplicating IDs
 }
 
+//
+//TODO:graph要有某种合理的排序使得空间不那么拥挤.
+//
+func (g graph) scale() (width int, height int) {
+	//一个方向出度的最大值是拓扑排序的后面的结点的个数
+	//向上的高度取决于向下的出度.
+	//H = out (if out >1)
+	//H = h   (if out <=1)
+	//W =
+	//把每个结点抽象成一个矩形.
+	//(否定)连线的高度取决于最近有连接的边的长度.
+	//先用最简单的一字排开的方法.
+	//首先算出每个矩形的长宽,再在矩形之间高度+2,宽度+1,
+	//就可以
+	//上面的线射右边,下面的线射左边.
+	//n=4,2,1,1,2
+	return 0, 0
+}
+
+func (g graph) draw(m *matrix) {
+}
+
 // newGraph inits a new graph.
 func newGraph() *graph {
 	return &graph{

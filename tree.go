@@ -20,8 +20,63 @@ const (
 	rPAREN
 )
 
+//implements painter
 type tree struct {
 	root *node
+}
+
+func newTree() *tree {
+	return &tree{
+		root: new(node),
+	}
+}
+
+func (t tree) scale() (width int, height int) {
+	return getscale(t.root)
+}
+func _draw(m *matrix, n *node, offsetX, offsetY int) {
+	//fmt.Println("draw x,y", offsetX, offsetY)
+	//根节点打印TREE
+	//print "TREE" for root nil node.
+	if n.ele == nil {
+		m.paintA([][]byte{[]byte("TREE")}, offsetX, offsetY)
+		offsetY++
+		if n.leftChild != nil {
+			_draw(m, n.leftChild, offsetX, offsetY)
+		}
+	} else {
+		//fmt.Println("is not nil")
+		m.paintA([][]byte{[]byte(n.ele.(token).lit)}, offsetX, offsetY)
+		offsetY++
+		//如果有子节点就要向下画一层辅助线
+		//if there is child,paint  auxiliary line.
+		if n.leftChild != nil {
+			//fmt.Println("child is not nil", "parent is", n.ele.(token))
+			m.paint(byte('/'), offsetX, offsetY)
+			//fmt.Println("draw right down child  x y", offsetX, offsetY+1)
+			_draw(m, n.leftChild, offsetX, offsetY+1)
+			//fmt.Println("get out right down child")
+			w, _ := getscale(n.leftChild)
+			//fmt.Println("child width->", w)
+			//fmt.Println("before offsetX is", offsetX)
+			offsetX += w
+			//fmt.Println("begin loop****")
+			for l := n.leftChild.nextSibling; l != nil; l = l.nextSibling {
+				//fmt.Println("draw \\ -> x,y:", offsetX, offsetY)
+				m.paint(byte('\\'), offsetX, offsetY)
+				_draw(m, l, offsetX+1, offsetY+1)
+				w, _ = getscale(l)
+				offsetX += w + 1
+				//fmt.Println("after offsetX is", offsetX)
+			}
+			//fmt.Println("end loop****")
+		}
+
+	}
+}
+
+func (t tree) draw(m *matrix) {
+	_draw(m, t.root, 0, 0)
 }
 
 //dfs
@@ -93,6 +148,44 @@ func (n *node) height() int {
 		}
 	})
 	return height
+}
+
+//getscale gets width and hieght of a root node n on behalf of a tree.
+func getscale(n *node) (width int, height int) {
+	if n.ele == nil {
+		height = 1
+		width = 4 // len("TREE")
+	} else {
+		height = 1
+		width = len(n.ele.(token).lit)
+	}
+	if n.leftChild != nil {
+		//该节点右子节点至少要画一个竖线,高度还要加1,root的NIL结点不加
+		//one more line for auxiliary line( '\' | '|'),root的NIL结点不加
+		if n.ele != nil {
+			height++
+		}
+		var htTmp, whTmp, withSpaceCount int
+
+		for l := n.leftChild; l != nil; l = l.nextSibling {
+			//递归获取每个子树的规模,取最高的高度加到高度的规模上.
+			//宽度要叠加,还要算上子树之间的一个空白符,最后和节点本身的宽度比较,决定大小.
+			//get highest hight of a tree to represent the whole tree.
+			//accumulate all the width of nodes on the same level as well as withspace between.
+			w, h := getscale(l)
+			if h > htTmp {
+				htTmp = h
+			}
+			whTmp += w
+			withSpaceCount++
+		}
+		whTmp += withSpaceCount - 1
+		if whTmp > width {
+			width = whTmp
+		}
+		height += htTmp
+	}
+	return
 }
 func (n *node) rm() {
 	//it's not root

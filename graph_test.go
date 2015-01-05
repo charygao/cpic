@@ -1,5 +1,6 @@
 package cpic
 
+/*
 import (
 	"fmt"
 	"testing"
@@ -13,3 +14,4 @@ func TestGraph(t *testing.T) {
 	g.connect(&vertex{id: "A"}, &vertex{id: "C"}, 1)
 	fmt.Println(g)
 }
+*/

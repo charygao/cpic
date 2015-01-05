@@ -72,16 +72,16 @@ func TestDraw(t *testing.T) {
 				t.Fatalf("\n%s(wanted error) not equal\n%s", suit.err, strings.Join(p.errors, "\n"))
 			}
 		} else {
-			m := newMatrix(n)
+			m := newMatrix(&tree{root: n})
 			m.draw()
 			if suit.output != m.output() && len(suit.output) > 0 {
 				for i := 0; i < len(suit.output); i++ {
 					if suit.output[i] != m.output()[i] {
-						t.Logf("diff index [%d]: %c %c", i, suit.output[i], m.output()[i])
+						t.Logf("diff index [%d]: %c %c in %s", i, suit.output[i], m.output()[i], suit.name)
 						break
 					}
 				}
-				t.Fatalf("\n%s(wanted output) not equal\n%s", suit.output, m.output())
+				t.Fatalf("\n%s(wanted output) not equal\n%s in %s", suit.output, m.output(), suit.name)
 			}
 		}
 	}
