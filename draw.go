@@ -121,7 +121,7 @@ func (m *matrix) paintA(content [][]byte, px, py int) {
 	}
 }
 
-//递归绘制TREE
+//递归绘制图形
 //paint tree on the matrix.
 func (m *matrix) draw() {
 	m.node.draw(m)

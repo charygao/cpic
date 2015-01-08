@@ -2,11 +2,14 @@ package cpic // import "github.com/ggaaooppeenngg/cpic"
 
 //inspired by gyuho's goraph [https://github.com/gyuho/goraph/blob/refactor/graph/graph.go]
 import (
+	"github.com/ggaaooppeenngg/util"
 	"github.com/ggaaooppeenngg/util/container"
 )
 
 type graph struct {
 	*container.Graph
+	width  map[*container.Vertex]int
+	height map[*container.Vertex]int
 }
 
 //getMax returns max number of a and b,if a and b are both smaller thanl,returns l
@@ -21,8 +24,9 @@ func getMax(a, b, l int) int {
 		}
 	}
 }
+
 func newGraph() *graph {
-	return &graph{container.NewGraph()}
+	return &graph{container.NewGraph(), make(map[*container.Vertex]int), make(map[*container.Vertex]int)}
 }
 
 //TODO:graph要有某种合理的排序使得空间不那么拥挤.
@@ -68,16 +72,79 @@ func (g graph) scale() (width int, height int) {
 			}
 		}
 		//accumulate width and height
+		w := getMax(t, d, 1)
+		g.width[v1] = w
+		h := getMax(l, r, 1)
+		g.height[v1] = h
 		if k1 != len(g.Vertices)-1 {
-			width += getMax(t, d, 1) + 1
-			height += getMax(l, r, 1) + 2
+			width += w + 1
+			height += h + 2
 		} else {
-			width += getMax(t, d, 1)
-			height += getMax(l, r, 1)
+			width += w
+			height += h
 		}
 	}
 	return width, height
 }
 
+func sort(vtxg, vtxs []*container.Vertex, l, h int) {
+	if 1 == h-l || vtxs == nil {
+		return
+	}
+	var pivot = vtxs[l]
+	var index = l
+	for i := l; i < h; i++ {
+		if util.IndexOf(vtxs[i], vtxg) < util.IndexOf(pivot, vtxg) {
+			vtxs[index+1], vtxs[i] = vtxs[i], vtxs[index+1]
+			index++
+		}
+	}
+	sort(vtxg, vtxs, l, index+1)
+	sort(vtxg, vtxs, index+1, l)
+}
+
+//获得左上角的位置.
+func (g graph) pos(index int) (x, y int) {
+	for i, v := range g.Graph.Vertices[:index] {
+		x += g.width[v] + 1  //空格
+		y += g.height[v] + 2 //下箭头
+	}
+	return
+}
+
 func (g graph) draw(m *matrix) {
+	//一趟向下
+	for index1, v1 := range g.Graph.Vertices {
+		outbound := g.Graph.OutBound(v1)
+		sort(g.Graph.Vertices, outbound, 0, len(outbound))
+		if index1 != len(g.Graph.Vertices)-1 {
+			outbound = outbound[index1+1:]
+		}
+		//右边的出度,最接近,最下面
+		//
+		//for k2,v2:=range g.Graph.k
+		for k1, v2 := range outbound {
+			//第k1个出度
+			index2 := util.IndexOf(g.Graph.Vertices, v2)
+			//起点.
+			var xS, yS, xR, yR, xE, yE, x, y int //start,end,temporary position
+			x, y = g.pos(index1)
+			xS = x + g.width[v1]
+			yS = y + g.height[v1] - k1
+			inbound := g.Graph.InBound(v2)
+			sort(g.Graph.Vertices, inbound, 0, len(inbound))
+			//对于v2,v1的位置.,最后得出v1到v2的路线.
+			k2 := util.IndexOf(inbound, v1)
+			x, y = g.pos(index2)
+			xE = x + g.width[v2] - k2
+			yE = y - 1
+			yR = yS
+			xR = xE
+			//第k2个入度
+			m.paint('*', xS, yS)
+			m.paint('*', xR, yR)
+			m.paint('*', xE, yE)
+		}
+		//}
+	}
 }

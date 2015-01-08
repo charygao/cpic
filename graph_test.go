@@ -8,6 +8,10 @@ import (
 
 func TestGraph(t *testing.T) {
 	g := newGraph()
-	g.Graph.Connect(&container.Vertex{Id: "A"}, &container.Vertex{Id: "B"}, 0)
+	a := &container.Vertex{Id: "A"}
+	b := &container.Vertex{Id: "B"}
+	c := &container.Vertex{Id: "C"}
+	g.Graph.Connect(a, b, 0)
+	g.Graph.Connect(b, c, 0)
 	t.Log(g.scale())
 }
