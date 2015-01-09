@@ -102,9 +102,10 @@ func (g *graph) sort() {
 }
 
 func sort(vtxg, vtxs []*container.Vertex, l, h int) {
-	if 1 == h-l || vtxs == nil {
+	if h-l < 2 || vtxs == nil {
 		return
 	}
+	fmt.Println("l", l, "h", h)
 	var pivot = vtxs[l]
 	var index = l
 	for i := l; i < h; i++ {
@@ -113,8 +114,11 @@ func sort(vtxg, vtxs []*container.Vertex, l, h int) {
 			index++
 		}
 	}
+	vtxs[index], vtxs[l] = vtxs[l], vtxs[index]
+	fmt.Println("1")
 	sort(vtxg, vtxs, l, index+1)
-	sort(vtxg, vtxs, index+1, l)
+	fmt.Println("2")
+	sort(vtxg, vtxs, index+1, h)
 }
 
 //获得左上角的位置.
@@ -140,6 +144,7 @@ func (g graph) draw(m *matrix) {
 		for i, v := range outbound {
 			if g.index[v] > index1 {
 				divider = i
+				break
 			}
 		}
 		fmt.Println("divider", divider)
