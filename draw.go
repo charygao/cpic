@@ -112,13 +112,30 @@ func (m *matrix) paint(r byte, x, y int) {
 	m.py[y][x] = r
 }
 
-//paint an area(px,py,lenX,lenY)
+//paintA paints an area(px,py,lenX,lenY)
 func (m *matrix) paintA(content [][]byte, px, py int) {
 	for y, xl := range content {
 		for x, r := range xl {
 			m.py[py+y][px+x] = r
 		}
 	}
+}
+
+//paintT paints a transpose matrix
+func (m *matrix) paintT(content [][]byte, px, py int) {
+	var transpose [][]byte
+	if len(content) != 0 {
+		transpose = make([][]byte, len(content[0]))
+	}
+	for i, _ := range transpose {
+		transpose[i] = make([]byte, len(content))
+	}
+	for i, bs := range content {
+		for j, byte := range bs {
+			transpose[j][i] = byte
+		}
+	}
+	m.paintA(transpose, px, py)
 }
 
 //递归绘制图形

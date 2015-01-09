@@ -2,6 +2,8 @@ package cpic // import "github.com/ggaaooppeenngg/cpic"
 
 //inspired by gyuho's goraph [https://github.com/gyuho/goraph/blob/refactor/graph/graph.go]
 import (
+	"bytes"
+
 	"github.com/ggaaooppeenngg/util"
 	"github.com/ggaaooppeenngg/util/container"
 )
@@ -105,7 +107,7 @@ func sort(vtxg, vtxs []*container.Vertex, l, h int) {
 
 //获得左上角的位置.
 func (g graph) pos(index int) (x, y int) {
-	for i, v := range g.Graph.Vertices[:index] {
+	for _, v := range g.Graph.Vertices[:index] {
 		x += g.width[v] + 1  //空格
 		y += g.height[v] + 2 //下箭头
 	}
@@ -121,8 +123,6 @@ func (g graph) draw(m *matrix) {
 			outbound = outbound[index1+1:]
 		}
 		//右边的出度,最接近,最下面
-		//
-		//for k2,v2:=range g.Graph.k
 		for k1, v2 := range outbound {
 			//第k1个出度
 			index2 := util.IndexOf(g.Graph.Vertices, v2)
@@ -140,11 +140,12 @@ func (g graph) draw(m *matrix) {
 			yE = y - 1
 			yR = yS
 			xR = xE
-			//第k2个入度
-			m.paint('*', xS, yS)
-			m.paint('*', xR, yR)
-			m.paint('*', xE, yE)
+			l := xR - xS
+			//画"---"线
+			m.paintA([][]byte{bytes.Repeat([]byte("-"), l)}, xS, yS)
+			h := yE - yR + 1
+			//画"+-->"线,并且转置成竖线
+			m.paintT([][]byte{append([]byte("+"), append(bytes.Repeat([]byte("-"), h-2), byte('v'))...)}, xR, yR)
 		}
-		//}
 	}
 }
