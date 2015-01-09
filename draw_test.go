@@ -1,6 +1,7 @@
 package cpic
 
 import (
+	"github.com/ggaaooppeenngg/util/container"
 	//"log"
 	"strings"
 	"testing"
@@ -59,7 +60,7 @@ red*red*****red****
 	},
 }
 
-func TestDraw(t *testing.T) {
+func TestTreeDraw(t *testing.T) {
 	defer func() {
 		placeHolder = ' '
 	}()
@@ -85,4 +86,19 @@ func TestDraw(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestDrawGraph(t *testing.T) {
+	defer func() {
+		placeHolder = ' '
+	}()
+	placeHolder = '*'
+	g := newGraph()
+	a := &container.Vertex{Id: "A"}
+	b := &container.Vertex{Id: "B"}
+	g.Connect(a, b, 0)
+	g.Connect(b, a, 0)
+	m := newMatrix(g)
+	m.draw()
+	t.Log(m.output())
 }

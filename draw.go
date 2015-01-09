@@ -93,7 +93,6 @@ func newMatrix(node painter) *matrix {
 
 	m.width, m.height = node.scale()
 	//init m.py
-
 	m.py = make([][]byte, m.height)
 	for i := 0; i < m.height; i++ {
 		m.py[i] = make([]byte, m.width)
