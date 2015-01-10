@@ -200,35 +200,51 @@ func lexUnkown(l *lexer) stateFn {
 
 func lexNum(l *lexer) stateFn {
 	r := l.next()
-	getNum := false
-	if r == '-' { //optional '-'
+	var hasMatissa = false
+	var hasFraction = false
+	//optional '-',must be fllowed by at least  digit
+	if r == '-' {
 		r = l.next()
+		if !unicode.IsDigit(r) {
+			l.errf("expect decimal after '-',found %c at line %d,column %d", r, l.lineNum+1, l.colNum)
+			return lexError
+		}
 	}
+	//scan matissa
 	if r != '.' { //optional digit*
 		for unicode.IsDigit(r) {
-			getNum = true
+			hasMatissa = true
 			r = l.next()
 		}
 	}
+	//scan fraction
 	if r == '.' { //optional .digit*
+		r = l.next()
 		for unicode.IsDigit(r) {
-			getNum = true
+			hasFraction = true
 			r = l.next()
 		}
 	}
+	ln := l.lineNum
+	cn := l.colNum + 1
 	if r == 'e' || r == 'E' { //optional [E|e]-?digit*
 		r = l.next()
 		if r == '-' {
 			r = l.next()
 		}
+		//expotiona must be fllowed by at least one decimal digit
+		if !unicode.IsDigit(r) {
+			l.errf("expect decimal after expotion c at line %d,column %d", r, l.lineNum+1, l.colNum)
+			return lexError
+		}
 		for unicode.IsDigit(r) {
-			getNum = true
 			r = l.next()
 		}
 	}
-	if !getNum {
-
+	if !hasMatissa && !hasFraction {
+		l.errf("expect decimal at line %d,column %d", ln, cn)
 	}
+	l.emit(tNUM)
 	return lexBegin
 }
 
