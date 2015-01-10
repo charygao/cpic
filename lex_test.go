@@ -11,6 +11,15 @@ type lexTestPair struct {
 	output []int
 }
 
+func TestNum(test *testing.T) {
+	l := newLexer(`tree:
+	a-<`)
+	for t := l.token(); t.typ != tEOF; t = l.token() {
+		test.Log(t)
+	}
+	test.Log(l.errors)
+}
+
 var lexTestPairs = []lexTestPair{
 	{
 		"Normal Test 1",
@@ -22,12 +31,17 @@ var lexTestPairs = []lexTestPair{
 		[]int{kTREE, tCOLON, tTAG, tRIGHT_ARROW, tIDENT,
 			tTAG, tTAG, tRIGHT_ARROW, tIDENT,
 			tTAG, tTAG, tRIGHT_ARROW, tIDENT}},
+	{"Number test 1",
+		[]string{}, `-120.100`, []int{tNUM},
+	}, {"Number test Exception 2",
+		[]string{`unexpected '<' after '-' at line 1,column 2`}, `-<`, []int{tNUM},
+	},
 	{
 		"Exception Test 1",
-		[]string{"expect '>' after '-' at line 2,column 3"},
+		[]string{"unexpected '<' after '-' at line 2,column 4"},
 		`tree:
-a-<`,
-		[]int{kTREE, tCOLON, tIDENT},
+	a-<`,
+		[]int{kTREE, tCOLON, tTAG, tIDENT},
 	},
 	{
 		"Exception Test 2",
@@ -58,6 +72,10 @@ func TestLex(test *testing.T) {
 			i++
 		}
 		for i := 0; i < len(ltp.errs); i++ {
+			if i > len(lex.errors)-1 {
+				test.Fatalf("%s(wanted error) equal nothing in %s", ltp.errs[i], ltp.name)
+				break
+			}
 			if ltp.errs[i] != lex.errors[i] {
 				test.Fatalf("%s(wanted error) not equal %s in %s\n", ltp.errs[i], lex.errors[i], ltp.name)
 			}

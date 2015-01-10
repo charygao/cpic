@@ -137,6 +137,7 @@ func (p *parser) foresee(typs []int) bool {
 //graph:
 //a->1 b,10 c,1 d,2 e,100 f//不可以重复,格式是权重加结点,中间空格.
 //b->f,c,e,f  //没有出现的,自动添加,没有默认是0,
+//only decimal float and int allowed in weight.
 func (p *parser) Graph(n *graph) *graph {
 	p.token()
 	return nil

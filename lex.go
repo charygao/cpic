@@ -53,18 +53,25 @@ const (
 	key_words_begin = iota
 	//keyword
 	kTREE //tree
+	kGRAPH
 	key_words_end
 
 	token_begin
 	//token
-	tIDENT       //(_|letter)(_|letter|digit)*
+	tIDENT //identifier (_|letter)(_|letter|digit)*
+	tNUM   //number -?digit*.digit*[E|e]-?digit*
+
 	tRIGHT_ARROW //->
 	tLEFT_ARROW  //<-
-	tTAG         //\t
-	tCOLON       //:
-	tOR          //|
-	tERR         //err
-	tEOF         //eof
+
+	tTAG   //\t
+	tCOLON //:
+	tCOMMA //,
+
+	tOR //|
+
+	tERR //err
+	tEOF //eof
 	token_end
 )
 
@@ -72,11 +79,14 @@ const eof = -1
 
 var tokens = map[int]string{
 	kTREE:        "tree",
+	kGRAPH:       "graph",
 	tRIGHT_ARROW: "[->]",
 	tLEFT_ARROW:  "[<-]",
 	tTAG:         "[TAG]",
 	tIDENT:       "[IDENT]",
+	tNUM:         "[NUM]",
 	tCOLON:       "[COLON]",
+	tCOMMA:       "[COMMA]",
 	tEOF:         "[EndOfFile]",
 }
 
@@ -125,6 +135,13 @@ func (l *lexer) errf(f string, v ...interface{}) {
 func (l *lexer) backup() {
 	l.pos -= l.width
 	l.colNum -= l.width
+}
+
+//peek a token
+func (l *lexer) peek() rune {
+	r := l.next()
+	l.backup()
+	return r
 }
 
 //ignore a token
@@ -181,6 +198,40 @@ func lexUnkown(l *lexer) stateFn {
 	return nil
 }
 
+func lexNum(l *lexer) stateFn {
+	r := l.next()
+	getNum := false
+	if r == '-' { //optional '-'
+		r = l.next()
+	}
+	if r != '.' { //optional digit*
+		for unicode.IsDigit(r) {
+			getNum = true
+			r = l.next()
+		}
+	}
+	if r == '.' { //optional .digit*
+		for unicode.IsDigit(r) {
+			getNum = true
+			r = l.next()
+		}
+	}
+	if r == 'e' || r == 'E' { //optional [E|e]-?digit*
+		r = l.next()
+		if r == '-' {
+			r = l.next()
+		}
+		for unicode.IsDigit(r) {
+			getNum = true
+			r = l.next()
+		}
+	}
+	if !getNum {
+
+	}
+	return lexBegin
+}
+
 //end of scanning
 func lexEOF(l *lexer) stateFn {
 	l.emit(tEOF)
@@ -207,12 +258,22 @@ func lexBegin(l *lexer) stateFn {
 	switch r := l.next(); {
 	case unicode.IsLetter(r) || r == '_':
 		return lexId
+	case unicode.IsDigit(r) || r == '.' || r == '-':
+		r2 := l.peek()
+		if r == '-' &&
+			r2 != '.' && !unicode.IsDigit(r2) && r2 != 'E' && r2 != 'e' {
+			goto FL
+		}
+		l.backup()
+		return lexNum
+	FL:
+		fallthrough
 	case r == '-':
 		r = l.next()
 		if r == '>' {
 			l.emit(tRIGHT_ARROW)
 		} else {
-			l.errf("expect '>' after '-' at line %d,column %d", l.lineNum+1, l.colNum)
+			l.errf("unexpected '%c' after '-' at line %d,column %d", r, l.lineNum+1, l.colNum)
 			return lexError
 		}
 	case r == '<':
@@ -220,7 +281,7 @@ func lexBegin(l *lexer) stateFn {
 		if r == '-' {
 			l.emit(tLEFT_ARROW)
 		} else {
-			l.errf("expect '-' after '<' at line %d,column %d", l.lineNum+1, l.colNum)
+			l.errf("unexpected '%c' after '<' at line %d,column %d", r, l.lineNum+1, l.colNum)
 			return lexError
 		}
 	case r == ' ':
@@ -235,6 +296,8 @@ func lexBegin(l *lexer) stateFn {
 		l.emit(tOR)
 	case r == '\t':
 		l.emit(tTAG)
+	case r == ',':
+		l.emit(tCOMMA)
 	case r == eof:
 		return lexEOF
 	default:

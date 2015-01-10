@@ -10,13 +10,13 @@ import (
 )
 
 type graph struct {
-	*container.Graph
-	width  map[*container.Vertex]int
-	height map[*container.Vertex]int
-	index  map[*container.Vertex]int
+	*container.Graph                           //Graph container
+	width            map[*container.Vertex]int //width of vertex in this graph
+	height           map[*container.Vertex]int //height of vertex in this graph
+	index            map[*container.Vertex]int //index of vertex in Graph.Vertecies
 }
 
-//getMax returns max number of a and b,if a and b are both smaller thanl,returns l
+//getMax returns max number of a and b,if a and b are both smaller thanl,returns l.
 func getMax(a, b, l int) int {
 	if a < l && b < l {
 		return l
@@ -29,6 +29,7 @@ func getMax(a, b, l int) int {
 	}
 }
 
+//newGraph returns new graph and initiates the maps.
 func newGraph() *graph {
 	return &graph{container.NewGraph(),
 		make(map[*container.Vertex]int),
@@ -105,7 +106,6 @@ func sort(vtxg, vtxs []*container.Vertex, l, h int) {
 	if h-l < 2 || vtxs == nil {
 		return
 	}
-	fmt.Println("l", l, "h", h)
 	var pivot = vtxs[l]
 	var index = l
 	for i := l; i < h; i++ {
@@ -115,10 +115,27 @@ func sort(vtxg, vtxs []*container.Vertex, l, h int) {
 		}
 	}
 	vtxs[index], vtxs[l] = vtxs[l], vtxs[index]
-	fmt.Println("1")
 	sort(vtxg, vtxs, l, index+1)
-	fmt.Println("2")
 	sort(vtxg, vtxs, index+1, h)
+}
+
+func (g graph) divide(vtx *container.Vertex, vtxs []*container.Vertex) (up, down []*container.Vertex) {
+	sort(g.Graph.Vertices, vtxs, 0, len(vtxs))
+	divider := -1
+	for i, v := range vtxs {
+		if g.index[v] > g.index[vtx] {
+			divider = i
+			break
+		}
+	}
+	if divider == -1 {
+		divider = len(vtxs)
+	} else {
+		down = vtxs[divider:]
+	}
+	up = vtxs[:divider]
+	fmt.Println("divider", divider)
+	return
 }
 
 //获得左上角的位置.
@@ -136,23 +153,15 @@ func (g graph) draw(m *matrix) {
 	//一趟向下
 	for index1, v1 := range g.Graph.Vertices {
 		fmt.Println("loop")
+		fmt.Println(m.output())
 		outbound := g.Graph.OutBound(v1)
-		sort(g.Graph.Vertices, outbound, 0, len(outbound))
 		//divide to down and up outbound
 		//get divider
-		var divider int
-		for i, v := range outbound {
-			if g.index[v] > index1 {
-				divider = i
-				break
-			}
-		}
-		fmt.Println("divider", divider)
-		outboundUp := outbound[:divider]
-		outboundDown := outbound[divider:]
-		if len(outbound) == 1 && g.index[outbound[0]] < index1 {
-			outboundUp, outboundDown = outboundDown, outboundUp
-		}
+		//对于每个点的出度,都划分成上下两部分,
+		//上部分是在全局数组g.Graph.Vertices中在v1,前面的点
+		//下部分是在全局数组里面
+		outboundUp, outboundDown := g.divide(v1, outbound)
+
 		var index2 int                       // index of outbound vertext
 		var xS, yS, xR, yR, xE, yE, x, y int //start,end,temporary position
 		for k1, v2 := range outboundDown {
@@ -166,9 +175,9 @@ func (g graph) draw(m *matrix) {
 			yS = y + g.height[v1] - 1 - k1 //k1 counts from 0
 			fmt.Println(yS, y, g.height[v1], k1)
 			inbound := g.Graph.InBound(v2)
-			sort(g.Graph.Vertices, inbound, 0, len(inbound))
+			up, _ := g.divide(v1, inbound)
 			//对于v2,v1的位置.,最后得出v1到v2的路线.
-			k2 := util.IndexOf(v1, inbound)
+			k2 := util.IndexOf(v1, up)
 			x, y = g.pos(index2)
 			xE = x + g.width[v2] - 1 - k2 //k2 counts from 0
 			fmt.Println(xE, x, g.width[v2], k2)
@@ -189,21 +198,23 @@ func (g graph) draw(m *matrix) {
 			//k1越小离得越远
 			x, y = g.pos(index1)
 			xS = x - 1
-			yS = y + g.height[v2] - 1 - k1
+			yS = y + g.height[v1] - 1 - k1
 			fmt.Println(yS, y, g.height[v2], k1)
 			index2 := g.index[v2]
 			x, y = g.pos(index2)
 			inbound := g.Graph.InBound(v2)
-			sort(g.Graph.Vertices, inbound, 0, len(inbound))
-			k2 := util.IndexOf(v1, inbound)
+			//入度的坐标也要切
+			_, down := g.divide(v2, inbound)
+			k2 := util.IndexOf(v1, down)
 			//越小就离右边离得越近
 			xE = x + g.width[v2] - 1 - k2
 			fmt.Println(xE, x, g.width[v2], k2)
-			yE = y + 1
+			yE = y + g.height[v2]
+			fmt.Println(yE, y, g.height[v2])
 			yR = yS
 			xR = xE
 			l := xS - xR
-			m.paintA([][]byte{bytes.Repeat([]byte("-"), l)}, xS, yS)
+			m.paintA([][]byte{bytes.Repeat([]byte("-"), l)}, xR+1, yR)
 			h := yR - yE + 1
 			//画"<---+"线,并且转置
 			m.paintT([][]byte{append([]byte("^"), append(bytes.Repeat([]byte("|"), h-2), byte('+'))...)}, xE, yE)
