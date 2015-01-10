@@ -56,7 +56,7 @@ red*red*****red****
 		->red
 			->red
 	->black`, ``,
-		`unexpected '	' after tree parsed at line 5,column 1`, //do not care output
+		`unexpected '	' after end of tree parsing at line 5,column 1`, //do not care output
 	},
 }
 
@@ -67,13 +67,13 @@ func TestTreeDraw(t *testing.T) {
 	placeHolder = '*'
 	for _, suit := range treeTestSuits {
 		p := newParser(suit.input)
-		n := p.parse()
-		if n == nil {
+		painter := p.parse()
+		if painter == nil {
 			if suit.err != strings.Join(p.errors, "\n") {
 				t.Fatalf("\n%s(wanted error) not equal\n%s", suit.err, strings.Join(p.errors, "\n"))
 			}
 		} else {
-			m := newMatrix(&tree{root: n})
+			m := newMatrix(painter)
 			m.draw()
 			if suit.output != m.output() && len(suit.output) > 0 {
 				for i := 0; i < len(suit.output); i++ {

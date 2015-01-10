@@ -79,17 +79,17 @@ type painter interface {
 //v
 //Y
 type matrix struct {
-	width  int
-	height int
-	node   painter  //root node
-	py     [][]byte //every py's element is a x line
+	width   int
+	height  int
+	painter          //root node
+	py      [][]byte //every py's element is a x line
 }
 
 //Newmatrix parses root node scale's width and height to
 //initate underlying [][]uint8 and return matrix.
 func newMatrix(node painter) *matrix {
 	m := new(matrix)
-	m.node = node
+	m.painter = node
 
 	m.width, m.height = node.scale()
 	//init m.py
@@ -140,7 +140,7 @@ func (m *matrix) paintT(content [][]byte, px, py int) {
 //递归绘制图形
 //paint tree on the matrix.
 func (m *matrix) draw() {
-	m.node.draw(m)
+	m.painter.draw(m)
 }
 
 //输出字符串
@@ -156,13 +156,11 @@ func (m *matrix) output() string {
 //Gen inputs source text and output data structure char picture.
 func Gen(src string) (string, error) {
 	p := newParser(src)
-	n := p.parse()
-	if n == nil {
+	painter := p.parse()
+	if painter == nil {
 		return "", errors.New(strings.Join(p.errors, "\n"))
 	}
-	t := newTree()
-	t.root = n
-	m := newMatrix(t)
+	m := newMatrix(painter)
 	m.draw()
 	return m.output(), nil
 }
