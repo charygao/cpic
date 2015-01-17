@@ -105,7 +105,7 @@ func (p *parser) expect(typ int) bool {
 }
 
 //parse a run of tokens,if not backup all the parsed the tokens in this routine
-func (p *parser) run(typs []int) bool {
+func (p *parser) run(typs ...int) bool {
 	var tkbuf []token
 	for _, typ := range typs {
 		t := p.token()
@@ -125,7 +125,7 @@ var display = func(v ...interface{}) {
 }
 
 //foresee run of tokens
-func (p *parser) foresee(typs []int) bool {
+func (p *parser) foresee(typs ...int) bool {
 	var ok = true
 	var tkbuf []token
 	for _, typ := range typs {
@@ -169,7 +169,8 @@ func (p *parser) parsePairs(pairs []pair) (t *token, typ int) {
 //图不可以赋值.
 //graph:
 //a->1 b,10 c,1 d,2 e,100 f//不可以重复,没有的会自动创建,但是不能有平行边.
-//b->f,2 c,e,f  //没有出现的,自动添加,没有默认是0,
+//b->f,2 c,e,f  //没有出现的,自动添加,没有默认是0.
+//暂时不支持指向自己.
 //only decimal float and int allowed in weight.
 func (p *parser) Graph(n *graph) {
 	//keyword 'graph' has been parsed.
@@ -181,11 +182,16 @@ func (p *parser) Graph(n *graph) {
 
 func (p *parser) parseEdge(vtx *container.Vertex, g *graph) *container.Vertex {
 	token := p.token()
-	var weight float64 = 0.0
+	var weight *float64
+	var err error
 	var numParsed = false
 	if token.typ == tNUM {
 		numParsed = true
-		weight, _ = strconv.ParseFloat(token.lit, 64)
+		weight = new(float64)
+		*weight, err = strconv.ParseFloat(token.lit, 64)
+		if err != nil {
+			panic(err)
+		}
 	}
 	if numParsed {
 		token = p.token()
@@ -194,13 +200,22 @@ func (p *parser) parseEdge(vtx *container.Vertex, g *graph) *container.Vertex {
 		v := g.FindVertexById(token.lit)
 		if v == nil {
 			newVtx := &container.Vertex{token.lit, weight}
-			g.Connect(vtx, newVtx, weight)
+			if weight != nil {
+				g.Connect(vtx, newVtx, *weight)
+			} else {
+				g.Connect(vtx, newVtx)
+			}
 			return newVtx
 		} else {
 			if g.EdgeExists(vtx, v) {
 				p.errf("edge from %d to %d has exists,can not reset it", vtx.Id, v.Id)
 			} else {
-				g.Connect(vtx, v, weight)
+				if weight != nil {
+
+					g.Connect(vtx, v, *weight)
+				} else {
+					g.Connect(vtx, v)
+				}
 				return v
 			}
 		}
@@ -212,15 +227,16 @@ func (p *parser) parseEdge(vtx *container.Vertex, g *graph) *container.Vertex {
 
 //graph parsing
 func (p *parser) parseGraph(g *graph) *graph {
-	if p.foresee([]int{tIDENT, tRIGHT_ARROW}) {
+	if p.foresee(tIDENT, tRIGHT_ARROW) {
 		p.errf("emty graph is no allowed")
 	}
-	for p.foresee([]int{tIDENT, tRIGHT_ARROW}) {
+	for p.foresee(tIDENT, tRIGHT_ARROW) {
 		var vtx *container.Vertex
 		p.parsePairs([]pair{
 			{tIDENT, func(ts ...token) {
 				tk := ts[0]
 				vtx = &container.Vertex{Id: tk.lit}
+				fmt.Println("parse and add", tk.lit)
 				g.AddVertex(vtx)
 			}},
 			{tRIGHT_ARROW, nil},
@@ -229,8 +245,10 @@ func (p *parser) parseGraph(g *graph) *graph {
 			return g
 		}
 		for {
-			if !p.expect(tCOMMA) {
-				return g
+			if !p.foresee(tCOMMA) {
+				break
+			} else {
+				p.run(tCOMMA)
 			}
 			if p.parseEdge(vtx, g) == nil {
 				return g
@@ -270,7 +288,7 @@ func (p *parser) tree(root *node) *node {
 	var firstChild = true
 	//每次看到长度为depth的[TAG]token解析一个结点
 	//want "depth" tags
-	for p.run(tags) {
+	for p.run(tags...) {
 		//log.Println("run tags ", root.depth)
 		//解析一个结点
 		//parse a new node
@@ -294,14 +312,14 @@ func (p *parser) tree(root *node) *node {
 			//log.Println("parse node ok")
 			//如果下一层的tags数比本层多一个,就解析子树
 			//if next tags - current tags = 1,parse child tree
-			if p.foresee(append(tags, tTAG)) {
+			if p.foresee(append(tags, tTAG)...) {
 				//log.Println("parse children")
 				p.tree(newNode)
 			}
 			//can parse siblings ?
-			if p.foresee(tags) {
+			if p.foresee(tags...) {
 				//第一层的结点唯一
-				//first level node only allows one.
+				//!!first level node only allows one.
 				if newNode.depth == 1 {
 					break
 				}

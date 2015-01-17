@@ -16,6 +16,7 @@ type position struct {
 
 //position 表示的是在源文本中的位置,会把ignore掉的token的位置也考虑进去
 //方便错误显示,line 和 col 都是从0开始计数的.
+type typ int //TODO:把typ都重新定义一个类型
 
 //lexical token.
 type token struct {
@@ -241,8 +242,12 @@ func lexNum(l *lexer) stateFn {
 			r = l.next()
 		}
 	}
+
 	if !hasMatissa && !hasFraction {
 		l.errf("expect decimal at line %d,column %d", ln, cn)
+	}
+	if r != eof {
+		l.backup()
 	}
 	l.emit(tNUM)
 	return lexBegin
@@ -306,6 +311,7 @@ func lexBegin(l *lexer) stateFn {
 		l.ignore()
 		l.lineNum++
 		l.colNum = 0
+		//l.emit(tNEWLINE),currently not neccesary in parsing.
 	case r == ':':
 		l.emit(tCOLON)
 	case r == '|':

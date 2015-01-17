@@ -6,17 +6,19 @@ import (
 	"testing"
 )
 
-type parserTestSuit struct {
-	name   string //for debug
-	errs   []string
-	input  string
-	output string
-}
+func TestParse(t *testing.T) {
 
-var parserTestSuits = []parserTestSuit{
-	{"Normal Test 1",
-		[]string{},
-		`tree:
+	type parserTestSuit struct {
+		name   string //for debug
+		errs   []string
+		input  string
+		output string
+	}
+
+	var parserTestSuits = []parserTestSuit{
+		{"Normal Test 1",
+			[]string{},
+			`tree:
 	->black
 		->red
 			->red
@@ -24,7 +26,7 @@ var parserTestSuits = []parserTestSuit{
 			->red
 		->red
 		->red`,
-		`TREE
+			`TREE
 *black
 **red
 ***red
@@ -33,35 +35,34 @@ var parserTestSuits = []parserTestSuit{
 **red
 **red
 `},
-	{
-		"Exception Test 1",
-		[]string{"want 2 indents for child node but get 3 at line 3"},
-		`tree:
+		{
+			"Exception Test 1",
+			[]string{"want 2 indents for child node but get 3 at line 3"},
+			`tree:
 	->black
 			->red`,
-		``, //do not care output
-	},
-	{"Exception Test 2",
-		[]string{"want a [IDENT], but only get '->' at line 3,column 5"},
-		`tree:
+			``, //do not care output
+		},
+		{"Exception Test 2",
+			[]string{"want a [IDENT], but only get '->' at line 3,column 5"},
+			`tree:
 	->black
 		->->red
 		->red
 `,
-		``, //do not care output
-	},
-	{"Exception Test 3",
-		[]string{"unexpected '	' after end of tree parsing at line 5,column 1"},
-		`tree:
+			``, //do not care output
+		},
+		{"Exception Test 3",
+			[]string{"unexpected '	' after end of tree parsing at line 5,column 1"},
+			`tree:
 	->red
 		->red
 			->red
 	->black
 `, ``, //do not care output
-	},
-}
+		},
+	}
 
-func TestParse(t *testing.T) {
 	defer func() {
 		display = func(v ...interface{}) {}
 	}()
@@ -91,4 +92,30 @@ func TestParse(t *testing.T) {
 			}
 		}
 	}
+}
+func TestGraphParse(t *testing.T) {
+	type testPair struct {
+		input string
+	}
+	var tests = []testPair{{`graph:
+a->1 b
+b->2 a`}}
+	defer func() {
+		placeHolder = ' '
+	}()
+	for _, test := range tests {
+		p := newParser(test.input)
+		painter := p.parse()
+		g := painter.(*graph)
+		a := g.FindVertexById("a")
+		b := g.FindVertexById("b")
+		if g.GetEdgeWeight(a, b) == nil || g.GetEdgeWeight(b, a) == nil {
+			n := newMatrix(painter)
+			n.draw()
+			t.Log(n.output())
+			t.Fail()
+		}
+
+	}
+
 }

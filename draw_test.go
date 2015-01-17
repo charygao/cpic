@@ -1,33 +1,33 @@
 package cpic
 
 import (
-	//"github.com/ggaaooppeenngg/util/container"
 	//"log"
 	"strings"
 	"testing"
 )
 
-type treeTestSuit struct {
-	name   string
-	input  string
-	output string
-	err    string
-}
+func TestTreeDraw(t *testing.T) {
+	type treeTestSuit struct {
+		name   string
+		input  string
+		output string
+		err    string
+	}
 
-var treeTestSuits = []treeTestSuit{
-	{
-		"Normal Test 1",
-		`tree:
+	var treeTestSuits = []treeTestSuit{
+		{
+			"Normal Test 1",
+			`tree:
 	->black
 		->red
 		->red`,
-		`TREE***
+			`TREE***
 black**
 /**\***
 red*red
 `, ``}, {
-		"Normal Test 2",
-		`tree:
+			"Normal Test 2",
+			`tree:
 	-> black
 		->red
 			->red
@@ -50,17 +50,16 @@ red*red*****red****
 ****/**\***********
 ****red*red********
 `, ``},
-	{"Exception Test 3",
-		`tree:
+		{"Exception Test 3",
+			`tree:
 	->red
 		->red
 			->red
 	->black`, ``,
-		`unexpected '	' after end of tree parsing at line 5,column 1`, //do not care output
-	},
-}
+			`unexpected '	' after end of tree parsing at line 5,column 1`, //do not care output
+		},
+	}
 
-func TestTreeDraw(t *testing.T) {
 	defer func() {
 		placeHolder = ' '
 	}()
@@ -88,23 +87,31 @@ func TestTreeDraw(t *testing.T) {
 	}
 }
 
-/*
 func TestDrawGraph(t *testing.T) {
+	type testPair struct {
+		input string
+	}
+	var tests = []testPair{
+		/*{`graph:
+		a->1 b`,
+				}, {`graph:
+		a->1 b,2 c`,
+				}, {`graph:
+		a->b,c`,
+				}, */{`graph:
+a->1 b,2 c
+b->1 a,2 c`,
+		}}
 	defer func() {
 		placeHolder = ' '
 	}()
 	placeHolder = '*'
-	g := newGraph()
-	a := &container.Vertex{Id: "A"}
-	b := &container.Vertex{Id: "B"}
-	c := &container.Vertex{Id: "C"}
-	g.Connect(a, c, 0)
-	g.Connect(b, a, 0)
-	g.Connect(b, c, 0)
-	g.Connect(c, b, 0)
-	g.Connect(c, a, 0)
-	m := newMatrix(g)
-	m.draw()
-	t.Log("\n" + m.output())
+	for i, test := range tests {
+		t.Log("test", i)
+		p := newParser(test.input)
+		g := p.parse()
+		m := newMatrix(g)
+		m.draw()
+		t.Log("\n" + m.output())
+	}
 }
-*/

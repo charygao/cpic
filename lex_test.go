@@ -24,6 +24,16 @@ func TestNum(t *testing.T) {
 			}
 		}
 	}
+	var tests2 = []testPair{
+		{`1 `, false},
+	}
+	for _, test := range tests2 {
+		l := newLexer(test.input)
+		tk := l.token()
+		if tk.typ != tNUM {
+			t.Fail()
+		}
+	}
 }
 
 //test lex
