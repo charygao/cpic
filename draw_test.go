@@ -21,8 +21,7 @@ func TestTreeDraw(t *testing.T) {
 	->black
 		->red
 		->red`,
-			`TREE***
-black**
+			`black**
 /**\***
 red*red
 `, ``}, {
@@ -39,8 +38,7 @@ red*red
 			->red
 				->red
 		->red
-			->red`, `TREE***************
-black**************
+			->red`, `black**************
 /**********\***\***
 red*********red*red
 /***********/***/**
@@ -100,7 +98,8 @@ func TestDrawGraph(t *testing.T) {
 		a->b,c`,
 				}, */{`graph:
 a->1 b,2 c
-b->1 a,2 c`,
+b->1 a,2 c
+c->1 d`,
 		}}
 	defer func() {
 		placeHolder = ' '

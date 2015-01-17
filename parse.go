@@ -236,7 +236,6 @@ func (p *parser) parseGraph(g *graph) *graph {
 			{tIDENT, func(ts ...token) {
 				tk := ts[0]
 				vtx = &container.Vertex{Id: tk.lit}
-				fmt.Println("parse and add", tk.lit)
 				g.AddVertex(vtx)
 			}},
 			{tRIGHT_ARROW, nil},

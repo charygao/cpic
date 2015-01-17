@@ -4,20 +4,23 @@ package cpic // import "github.com/ggaaooppeenngg/cpic"
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 
 	"github.com/ggaaooppeenngg/util"
 	"github.com/ggaaooppeenngg/util/container"
 )
 
+var precision int
+
+type info struct {
+	x, y, w, h int
+}
+
 //graph wraps container.Graph
 type graph struct {
-	*container.Graph                           //Graph container
-	width            map[*container.Vertex]int //width of vertex in this graph
-	height           map[*container.Vertex]int //height of vertex in this graph
-	offsetX          map[*container.Vertex]int //x pixl offset of a vertex
-	index            map[*container.Vertex]int //index of vertex in Graph.Vertecies
+	*container.Graph                            //Graph container
+	info             map[*container.Vertex]info //postion of vertex in this graph
+	index            map[*container.Vertex]int  //index of vertex in Graph.Vertecies
 }
 
 //getMax returns max number of a and b,if a and b are both smaller thanl,returns l.
@@ -37,9 +40,7 @@ func getMax(min int, nums ...int) int {
 //newGraph returns new graph and initiates the maps.
 func newGraph() *graph {
 	return &graph{container.NewGraph(),
-		make(map[*container.Vertex]int),
-		make(map[*container.Vertex]int),
-		make(map[*container.Vertex]int),
+		make(map[*container.Vertex]info),
 		make(map[*container.Vertex]int)}
 }
 
@@ -51,24 +52,19 @@ func (g graph) scale() (width int, height int) {
 	//矩形的左右边取决于两个出度的最大值,不能小于1.
 	//遍历每个结点
 	//整个图形的骨架就是.
-	//**
-	//**-+
-	// ^ |
-	// | v
-	// | ***
-	// | ***
-	// +-***-+
-	//     ^ |
-	//     | v
-	//     +-*
 	//有了代价的时候,终点的位置会相应改变,只要获得x值最大的那个,就是对应的终点的坐标.
 	//要考虑up和down方向.
-	var weightLenMax int = 0 // max length of weight stringifed.
+	//从上向下定位.
+	var offsetX, offsetY int //offsetX 是上个结点的最右边,offsetY是上个结点的最下面
 	for k1 := 0; k1 < len(g.Vertices); k1++ {
-		fmt.Println("index", k1)
-		var v1 = g.Vertices[k1]
-		var d, r int               // bottom inbound,right outbound.
-		var idLen int = len(v1.Id) // length of Id.
+		var (
+			v1           = g.Vertices[k1]
+			weightLenMax = 0          // max length of weight stringifed.
+			d, r         = 0, 0       // bottom inbound,right outbound.
+			t, l         = 0, 0       // top inbound, left outbound
+			idLen        = len(v1.Id) // length of Id.
+		)
+
 		if k1 != len(g.Graph.Vertices)-1 {
 			for _, v2 := range g.Graph.Vertices[k1+1:] {
 				if g.Graph.EdgeExists(v2, v1) {
@@ -79,7 +75,6 @@ func (g graph) scale() (width int, height int) {
 				}
 			}
 		}
-		var t, l int // top inbound, left outbound
 		for _, v2 := range g.Graph.Vertices[:k1] {
 			if g.Graph.EdgeExists(v2, v1) {
 				t++
@@ -103,25 +98,27 @@ func (g graph) scale() (width int, height int) {
 			}
 
 		}
-		//fmt.Println("weight length max", weightLenMax)
-		g.offsetX[v1] = weightLenMax
-		//accumulate width and height
+		//TODO:map 要加锁
+		info := g.info[v1] //用于存储定位后的结果
+		//宽度最大值
 		w := getMax(1, t, d, idLen) //at least width one
-		g.width[v1] = w
+		info.w = w
+		//长度最大值
 		h := getMax(1, l, r) //at least height one
-		g.height[v1] = h
-		fmt.Println("weight len max", weightLenMax)
-		if k1 != len(g.Vertices)-1 {
-			width += w + 1
-			height += h + 2
-		} else {
-			width += w
-			height += h
+		info.h = h
+		if k1 != 0 {
+			info.x = offsetX + 2 + weightLenMax
 		}
+		offsetX = info.x + info.w - 1
+		if k1 != 0 {
+			info.y = offsetY + 3
+		}
+		offsetY = info.y + info.h - 1
+		g.info[v1] = info
 	}
 	//danshi zhengti de guimo hai buzhi
 	//fmt.Println("scale", width, height)
-	return width + weightLenMax, height
+	return offsetX + 1, offsetY + 1
 }
 
 func (g *graph) sort() {
@@ -178,100 +175,99 @@ func (g graph) divide(vtx *container.Vertex, vtxs []*container.Vertex) (up, down
 }
 
 //获得左上角的位置.
-func (g graph) pos(index int) (x, y int) {
-	for _, v := range g.Graph.Vertices[:index] {
-		x += g.width[v] + 1  //空格
-		y += g.height[v] + 2 //下箭头
-	}
-	x += g.offsetX[g.Vertices[index]]
+func (g graph) position(index int) (x, y int) {
+	x = g.info[g.Vertices[index]].x
+	y = g.info[g.Vertices[index]].y
 	return
 }
 
 func (g graph) draw(m *matrix) {
-	g.sort()
-	width, height := m.scale()
-	fmt.Println("draw weigth width height", width, height)
-	//一趟向下
+	g.sort() //TODO:使得分布比较合理
+
+	//**
+	//**-+
+	// ^ |
+	// | v
+	// | ***
+	// | ***
+	// +-***-+
+	//     ^ |
+	//     | v
+	//     +-*
+
+	//draw from top to down
 	for index1, v1 := range g.Graph.Vertices {
-		//fmt.Println("loop", v1.Id)
 		var xS, yS, xR, yR, xE, yE, x, y int //start,end,temporary position
-		x, y = g.pos(index1)
+		x, y = g.position(index1)
 		m.paintA([][]byte{[]byte(v1.Id)}, x, y)
 		outbound := g.Graph.OutBound(v1)
-		//divide to down and up outbound
-		//get divider
-		//对于每个点的出度,都划分成上下两部分,
-		//上部分是在全局数组g.Graph.Vertices中在v1,前面的点
-		//下部分是在全局数组里面
+		//divide into down and up outbound
+		//把每个出度分成在这个点之前后之后的,因为绘制箭头的方式不一样.
 		outboundUp, outboundDown := g.divide(v1, outbound)
 
-		var index2 int // index of outbound vertext
+		var index2 int // index of outbound vertext in global g.Graph.Vertices.
 		for k1, v2 := range outboundDown {
-			//fmt.Println("down")
-			x, y = g.pos(index1)
-			//右边的出度,最接近,最下面
-			//第k1个出度
-			//起点.
-			xS = x + g.width[v1]
-			yS = y + g.height[v1] - 1 - k1 //k1 counts from 0
-			//fmt.Println(yS, y, g.height[v1], k1)
-			//对于v2来说,v1在上方.
-			inbound := g.Graph.InBound(v2)
-			up, _ := g.divide(v1, inbound)
-			//对于v2,v1的位置.,最后得出v1到v2的路线.
+			//get postion of first '-'
+			x, y = g.position(index1)
+			//越近就越在下面
+			xS = x + g.info[v1].w
+			yS = y + g.info[v1].h - 1 - k1 //k1 counts from 0.if k1 = 0,outbound is the most bottom outbound.
+
+			//get position of 'v'
+			inboundOfV2 := g.Graph.InBound(v2)
+			up, _ := g.divide(v1, inboundOfV2)
 			k2 := util.IndexOf(v1, up)
 			index2 = g.index[v2]
-			x, y = g.pos(index2)
-			xE = x + g.width[v2] - 1 - k2 //k2 counts from 0
-			//fmt.Println(xE, x, g.width[v2], k2)
+			x, y = g.position(index2)
+			//越近就越在左边
+			xE = x + g.info[v2].w - 1 - k2 //k2 counts from 0.if k2 = 0,inbound is the most left inbound.
 			yE = y - 1
+
+			//postion of '+'
 			yR = yS
 			xR = xE
+
 			l := xR - xS // l >= 1
-			//画"---"线
-			//fmt.Println("paint")
-			//fmt.Println("paint -", l, "times", "start and end", xS, yS)
 			weight := g.GetEdgeWeight(v1, v2)
 			var weightString string
 			if weight != nil {
 				weightString = strconv.FormatFloat(*weight, 'f', 3, 64)
 			}
 			m.paintA([][]byte{append([]byte("-"+weightString), bytes.Repeat([]byte("-"), l-(1+len(weightString)))...)}, xS, yS)
+			//draw vertical line
 			h := yE - yR + 1
-			//画"+-->"线,并且转置成竖线
 			m.paintT([][]byte{append([]byte("+"), append(bytes.Repeat([]byte("|"), h-2), byte('v'))...)}, xR, yR)
 		}
 		for k1, v2 := range outboundUp {
-			fmt.Println("up")
-			//k1越小离得越远
-			x, y = g.pos(index1)
+			//get position of first '-'
+			x, y = g.position(index1)
 			xS = x - 1
-			yS = y + g.height[v1] - 1 - k1
-			fmt.Println("yS", yS, y, g.height[v2], k1)
+			yS = y + g.info[v1].h - 1 - k1 //k1 counts from 0,if k1 = 0,outbound is the most bottom outboound.
+
+			//get postion of '^'
 			index2 := g.index[v2]
-			x, y = g.pos(index2)
+			x, y = g.position(index2)
 			inbound := g.Graph.InBound(v2)
-			//入度的坐标也要切
 			_, down := g.divide(v2, inbound)
 			k2 := util.IndexOf(v1, down)
-			//越小就离右边离得越近
-			xE = x + g.width[v2] - 1 - k2
-			//fmt.Println(xE, x, g.width[v2], k2)
-			yE = y + g.height[v2]
-			//fmt.Println(yE, y, g.height[v2])
+			xE = x + g.info[v2].w - 1 - k2 //k2 counts from 0,if k2 = 0,inbound is the most right inbound.
+			yE = y + g.info[v2].h
+
+			//get postion of '+'
 			yR = yS
 			xR = xE
-			l := xS - xR //l >=1
+
+			//draw horizontal line.
+			l := xS - xR // l >= 1.
 			weight := g.GetEdgeWeight(v1, v2)
 			var weightString string
 			if weight != nil {
 				weightString = strconv.FormatFloat(*weight, 'f', 3, 64)
 			}
 			m.paintA([][]byte{append(bytes.Repeat([]byte("-"), l-(1+len(weightString))), []byte(weightString+"-")...)}, xR+1, yR)
+			//draw vertical line.
 			h := yR - yE + 1
-			//画"<---+"线,并且转置
 			m.paintT([][]byte{append([]byte("^"), append(bytes.Repeat([]byte("|"), h-2), byte('+'))...)}, xE, yE)
 		}
-		fmt.Println(m.output())
 	}
 }

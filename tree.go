@@ -39,8 +39,8 @@ func _draw(m *matrix, n *node, offsetX, offsetY int) {
 	//根节点打印TREE
 	//print "TREE" for root nil node.
 	if n.ele == nil {
-		m.paintA([][]byte{[]byte("TREE")}, offsetX, offsetY)
-		offsetY++
+		//m.paintA([][]byte{[]byte("TREE")}, offsetX, offsetY)
+		//offsetY++
 		if n.leftChild != nil {
 			_draw(m, n.leftChild, offsetX, offsetY)
 		}
@@ -153,8 +153,8 @@ func (n *node) height() int {
 //getscale gets width and hieght of a root node n on behalf of a tree.
 func getscale(n *node) (width int, height int) {
 	if n.ele == nil {
-		height = 1
-		width = 4 // len("TREE")
+		//height = 1
+		//width = 4 // len("TREE")
 	} else {
 		height = 1
 		width = len(n.ele.(token).lit)
