@@ -45,17 +45,8 @@ func newGraph() *graph {
 }
 
 //TODO:graph要有某种合理的排序使得空间不那么拥挤.
-//TODO:考虑边上要加上权重的值.
 func (g graph) scale() (width int, height int) {
-	//确定每个结点矩形的大小
-	//矩形的上下边取决于两个入度的最大值,不能小于1.
-	//矩形的左右边取决于两个出度的最大值,不能小于1.
-	//遍历每个结点
-	//整个图形的骨架就是.
-	//有了代价的时候,终点的位置会相应改变,只要获得x值最大的那个,就是对应的终点的坐标.
-	//要考虑up和down方向.
-	//从上向下定位.
-	var offsetX, offsetY int //offsetX 是上个结点的最右边,offsetY是上个结点的最下面
+	var offsetX, offsetY int //offsetX is previous node's right most x,offsetY is previous node's bottom most y.
 	for k1 := 0; k1 < len(g.Vertices); k1++ {
 		var (
 			v1           = g.Vertices[k1]
@@ -83,7 +74,6 @@ func (g graph) scale() (width int, height int) {
 					if weightLenMax < len(strconv.FormatFloat(*weight, 'f', 3, 64)) {
 						weightLenMax = len(strconv.FormatFloat(*weight, 'f', 3, 64))
 					}
-					//fmt.Println(strconv.FormatFloat(*weight, 'f', 3, 64))
 				}
 			}
 			if g.Graph.EdgeExists(v1, v2) {
@@ -93,12 +83,13 @@ func (g graph) scale() (width int, height int) {
 					if weightLenMax < len(strconv.FormatFloat(*weight, 'f', 3, 64)) {
 						weightLenMax = len(strconv.FormatFloat(*weight, 'f', 3, 64))
 					}
-					//fmt.Println(strconv.FormatFloat(*weight, 'f', 3, 64))
 				}
 			}
 
 		}
-		//TODO:map 要加锁
+
+		//TODO:add lock to map
+
 		info := g.info[v1] //用于存储定位后的结果
 		//宽度最大值
 		w := getMax(1, t, d, idLen) //at least width one
@@ -116,8 +107,7 @@ func (g graph) scale() (width int, height int) {
 		offsetY = info.y + info.h - 1
 		g.info[v1] = info
 	}
-	//danshi zhengti de guimo hai buzhi
-	//fmt.Println("scale", width, height)
+
 	return offsetX + 1, offsetY + 1
 }
 
@@ -127,6 +117,7 @@ func (g *graph) sort() {
 	}
 }
 func isSorted(vtxg, vtxs []*container.Vertex) bool {
+
 	/*
 		for i := 0; i < len(vtxs)-1; i++ {
 			if util.IndexOf(vtxs[i], vtxg) > util.IndexOf(vtxs[i+1], vtxg) {
@@ -136,6 +127,8 @@ func isSorted(vtxg, vtxs []*container.Vertex) bool {
 	*/
 	return true
 }
+
+//quick sort
 func sort(vtxg, vtxs []*container.Vertex, l, h int) {
 	if h-l < 2 || vtxs == nil {
 		return
@@ -153,6 +146,7 @@ func sort(vtxg, vtxs []*container.Vertex, l, h int) {
 	sort(vtxg, vtxs, index+1, h)
 }
 
+//divide divides vertecies into two parts,left vtxs and right vtxs of vtx.
 func (g graph) divide(vtx *container.Vertex, vtxs []*container.Vertex) (up, down []*container.Vertex) {
 	if !isSorted(g.Graph.Vertices, vtxs) {
 		sort(g.Graph.Vertices, vtxs, 0, len(vtxs))
@@ -170,17 +164,17 @@ func (g graph) divide(vtx *container.Vertex, vtxs []*container.Vertex) (up, down
 		down = vtxs[divider:]
 	}
 	up = vtxs[:divider]
-	//fmt.Println("divider", divider)
 	return
 }
 
-//获得左上角的位置.
+//opsition get the node x,y position at the index of Vertices.
 func (g graph) position(index int) (x, y int) {
 	x = g.info[g.Vertices[index]].x
 	y = g.info[g.Vertices[index]].y
 	return
 }
 
+//draw implement painter interface,paint chars a matrix
 func (g graph) draw(m *matrix) {
 	g.sort() //TODO:使得分布比较合理
 

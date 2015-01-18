@@ -35,41 +35,28 @@ func (t tree) scale() (width int, height int) {
 	return getscale(t.root)
 }
 func _draw(m *matrix, n *node, offsetX, offsetY int) {
-	//fmt.Println("draw x,y", offsetX, offsetY)
 	//根节点打印TREE
-	//print "TREE" for root nil node.
 	if n.ele == nil {
-		//m.paintA([][]byte{[]byte("TREE")}, offsetX, offsetY)
 		//offsetY++
 		if n.leftChild != nil {
 			_draw(m, n.leftChild, offsetX, offsetY)
 		}
 	} else {
-		//fmt.Println("is not nil")
 		m.paintA([][]byte{[]byte(n.ele.(token).lit)}, offsetX, offsetY)
 		offsetY++
 		//如果有子节点就要向下画一层辅助线
 		//if there is child,paint  auxiliary line.
 		if n.leftChild != nil {
-			//fmt.Println("child is not nil", "parent is", n.ele.(token))
 			m.paint(byte('/'), offsetX, offsetY)
-			//fmt.Println("draw right down child  x y", offsetX, offsetY+1)
 			_draw(m, n.leftChild, offsetX, offsetY+1)
-			//fmt.Println("get out right down child")
 			w, _ := getscale(n.leftChild)
-			//fmt.Println("child width->", w)
-			//fmt.Println("before offsetX is", offsetX)
 			offsetX += w
-			//fmt.Println("begin loop****")
 			for l := n.leftChild.nextSibling; l != nil; l = l.nextSibling {
-				//fmt.Println("draw \\ -> x,y:", offsetX, offsetY)
 				m.paint(byte('\\'), offsetX, offsetY)
 				_draw(m, l, offsetX+1, offsetY+1)
 				w, _ = getscale(l)
 				offsetX += w + 1
-				//fmt.Println("after offsetX is", offsetX)
 			}
-			//fmt.Println("end loop****")
 		}
 
 	}
@@ -243,7 +230,6 @@ func (n *node) add(newNode *node, typ relation) *node {
 		newNode.depth = n.depth + 1
 		return newNode
 	case rPREV:
-		//if it's lefChild
 		if n.prevSibling == nil {
 			n.parent.leftChild = newNode
 			newNode.parent = n.parent
