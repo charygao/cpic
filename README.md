@@ -1,13 +1,13 @@
-#cpic
+# cpic
 
 cpic (Char PICutre) is a tool to draw ASCII char pictures for data strcture.
 
-##Motivation:
+## Motivation:
 
 Sometimes,I want add some a picture in comments in order to understand a algrithom better,and also inspired by compiler techs like lex and parse.
 
 
-##Example:
+## Example:
 
 ```
 tree:
@@ -45,7 +45,7 @@ a-3.000---------------+
 ```
 
 
-#TODO:
+# TODO:
 
 *  more error handling.
 *  UML char picture.
